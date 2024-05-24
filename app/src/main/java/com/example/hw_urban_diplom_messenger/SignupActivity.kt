@@ -1,11 +1,54 @@
 package com.example.hw_urban_diplom_messenger
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
+import android.widget.Toast
+import com.example.hw_urban_diplom_messenger.databinding.ActivitySignupBinding
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.FirebaseDatabase
 
 class SignupActivity : AppCompatActivity() {
+
+    private lateinit var binding: ActivitySignupBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_signup)
+        binding = ActivitySignupBinding.inflate(layoutInflater)
+        setContentView(binding.root)
+
+        binding.signButton.setOnClickListener {
+            if ((binding.emailEditText.text.toString().isEmpty() ||
+                        binding.passwordEditText.text.toString().isEmpty())
+            ) {
+                Toast.makeText(
+                    applicationContext,
+                    "Fields cannot be empty",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else {
+                FirebaseAuth.getInstance().createUserWithEmailAndPassword(
+                    binding.emailEditText.text.toString(),
+                    binding.passwordEditText.text.toString()
+                ).addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val userInfo = HashMap<String, String>()
+                        userInfo["email"] = binding.emailEditText.text.toString()
+                        userInfo["username"] = binding.nameEditText.text.toString()
+                        userInfo["profileImage"] = ""
+                        userInfo["chats"] = ""
+                        FirebaseDatabase.getInstance().reference.child("Users").child(
+                            FirebaseAuth.getInstance().currentUser!!.uid
+                        ).setValue(userInfo)
+                        startActivity(
+                            Intent(
+                                this@SignupActivity,
+                                MessengerActivity::class.java
+                            )
+                        )
+                    }
+                }
+            }
+        }
     }
 }
