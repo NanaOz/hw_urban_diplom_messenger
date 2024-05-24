@@ -8,7 +8,7 @@
     tools:context=".MyProfileActivity">
 
     <ImageView
-        android:id="@+id/image"
+        android:id="@+id/myProfileImage"
         android:layout_width="match_parent"
         android:layout_height="200dp"
         android:scaleType="centerCrop"
@@ -19,6 +19,7 @@
         app:layout_constraintTop_toTopOf="parent" />
 
     <ImageView
+        android:id="@+id/changeProfileImage"
         android:layout_width="80dp"
         android:layout_height="80dp"
         android:layout_marginTop="148dp"
@@ -32,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_behavior="@string/appbar_scrolling_view_behavior"
-        app:layout_constraintTop_toBottomOf="@+id/image">
+        app:layout_constraintTop_toBottomOf="@+id/myProfileImage">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -45,10 +46,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:text="Name"
+                android:text="@string/name"
                 android:textSize="16sp" />
 
             <TextView
+                android:id="@+id/emailTextView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -66,14 +68,14 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Method of entry: "
+                    android:text="@string/method_of_entry"
                     android:textSize="16sp" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:background="@color/green"
-                    android:text="Email"
+                    android:text="@string/email"
                     android:textSize="16sp" />
 
             </LinearLayout>
@@ -84,41 +86,47 @@
                 android:layout_gravity="center"
                 android:layout_marginTop="12dp"
                 android:background="@color/bluelight"
-                android:text="NOT VERIFIED"
+                android:text="@string/not_verified"
                 android:textColor="@color/white"
                 android:textSize="16sp" />
 
             <EditText
+                android:id="@+id/nameEditText"
                 android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:hint="Name" />
+                android:hint="@string/name" />
 
             <EditText
+                android:id="@+id/lastNameEditText"
                 android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:hint="Last name" />
+                android:hint="@string/last_name" />
 
             <EditText
+                android:id="@+id/occupationEditText"
                 android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:hint="Occupation" />
+                android:hint="@string/occupation" />
 
             <EditText
+                android:id="@+id/adressEditText"
                 android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:hint="Adress" />
+                android:hint="@string/adress" />
 
             <EditText
+                android:id="@+id/ageEditText"
                 android:layout_width="300dp"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:hint="Age" />
+                android:hint="@string/age" />
 
             <ImageView
+                android:id="@+id/addPhoneImageView"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
@@ -126,11 +134,12 @@
                 android:src="@drawable/add_call" />
 
             <Button
+                android:id="@+id/saveButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="12dp"
-                android:text="Save" />
+                android:text="@string/save" />
 
         </LinearLayout>
     </ScrollView>

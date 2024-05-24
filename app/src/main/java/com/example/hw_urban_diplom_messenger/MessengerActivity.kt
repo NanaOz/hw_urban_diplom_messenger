@@ -41,8 +41,8 @@ class MessengerActivity : AppCompatActivity() {
                 sharedPreferences.edit().putBoolean("isLoggedIn", false).apply()
             }
             R.id.action_about -> {
-                //TODO
-                finishAffinity()
+                val intent = Intent(this, AboutActivity::class.java)
+                startActivity(intent)
                 return true
             }
             R.id.action_exit -> {
