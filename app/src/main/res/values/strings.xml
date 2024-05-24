@@ -8,4 +8,6 @@
     <string name="usernsme">Usernsme</string>
     <string name="repeat_the_password">Repeat the password</string>
     <string name="forgot_my_password">Forgot my password</string>
+    <string name="send">Send</string>
+    <string name="enter_yor_email">Enter your email to receive instructions on password recovery</string>
 </resources>
