@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1036376683892",
+    "project_id": "hwurbandiplommessenger",
+    "storage_bucket": "hwurbandiplommessenger.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1036376683892:android:63bf71570aadf8bb06a821",
+        "android_client_info": {
+          "package_name": "com.example.hw_urban_diplom_messenger"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAe638yCCufvE9S0iL1bSrFKx_SZkN__eI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

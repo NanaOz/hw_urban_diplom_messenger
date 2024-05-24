@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">hw_urban_diplom_messenger</string>
+    <string name="log_in">Log In</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="new_to_here">New to here?</string>
+    <string name="usernsme">Usernsme</string>
+    <string name="repeat_the_password">Repeat the password</string>
+</resources>
