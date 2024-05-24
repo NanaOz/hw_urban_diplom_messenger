@@ -10,4 +10,7 @@
     <string name="forgot_my_password">Forgot my password</string>
     <string name="send">Send</string>
     <string name="enter_yor_email">Enter your email to receive instructions on password recovery</string>
+    <string name="profile">Profile</string>
+    <string name="about_app">About App</string>
+    <string name="exit">Exit</string>
 </resources>
