@@ -13,4 +13,5 @@
     <string name="profile">Profile</string>
     <string name="about_app">About App</string>
     <string name="exit">Exit</string>
+    <string name="log_out">Log out</string>
 </resources>
