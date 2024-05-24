@@ -29,6 +29,15 @@ class MyProfileActivity : AppCompatActivity() {
         binding = ActivityMyProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val user = FirebaseAuth.getInstance().currentUser
+        val email = user?.email
+        val maskedEmail = email?.let {
+            val maskedChars = it.substring(0, it.length -14).replace("[a-zA-Z0-9]".toRegex(), "*")
+            val lastFourChars = it.substring(it.length - 14)
+            "$maskedChars$lastFourChars"
+        }
+        binding.emailTextView.text = maskedEmail
+
         binding.saveButton.setOnClickListener {
             val name = binding.nameEditText.text.toString()
             val lastName = binding.lastNameEditText.text.toString()
