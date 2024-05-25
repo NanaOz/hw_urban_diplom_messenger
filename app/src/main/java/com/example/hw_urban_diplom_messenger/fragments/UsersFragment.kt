@@ -1,5 +1,6 @@
-package com.example.hw_urban_diplom_messenger
+package com.example.hw_urban_diplom_messenger.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -8,12 +9,11 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.inputmethod.EditorInfo
-import android.widget.Toast
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.hw_urban_diplom_messenger.ChatActivity
 import com.example.hw_urban_diplom_messenger.databinding.FragmentUsersBinding
 import com.example.hw_urban_diplom_messenger.users.User
-import com.example.hw_urban_diplom_messenger.users.UserAdapter
+import com.example.hw_urban_diplom_messenger.adapters.UserAdapter
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -38,6 +38,13 @@ class UsersFragment : Fragment() {
         binding.recyclerViewUsers.adapter = usersAdapter
 
         retrieveUsersFromFirebase()
+
+        usersAdapter.setOnItemClickListener { user ->
+            val intent = Intent(activity, ChatActivity::class.java)
+            intent.putExtra("userId", user.name)
+            intent.putExtra("userName", user.name)
+            startActivity(intent)
+        }
 
         binding.searchEditText.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}

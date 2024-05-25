@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import com.example.hw_urban_diplom_messenger.adapters.PagerAdapter
 import com.example.hw_urban_diplom_messenger.databinding.ActivityMessengerBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
@@ -27,9 +28,9 @@ class MessengerActivity : AppCompatActivity() {
         binding.viewPager.visibility = View.VISIBLE
         TabLayoutMediator(binding.tabLayout, binding.viewPager) { tab, position ->
             tab.text = when (position) {
-                0 -> "Чаты"
-                1 -> "Пользователи"
-                else -> throw IllegalArgumentException("Недопустимая позиция: $position")
+                0 -> "Chats"
+                1 -> "Users"
+                else -> throw IllegalArgumentException("Invalid position: $position")
             }
         }.attach()
 

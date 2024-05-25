@@ -1,4 +1,4 @@
-package com.example.hw_urban_diplom_messenger.users
+package com.example.hw_urban_diplom_messenger.adapters
 
 import android.util.Log
 import android.view.LayoutInflater
@@ -8,9 +8,16 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hw_urban_diplom_messenger.R
+import com.example.hw_urban_diplom_messenger.users.User
 import com.squareup.picasso.Picasso
 
 class UserAdapter (private var users: MutableList<User> = mutableListOf()) : RecyclerView.Adapter<UserAdapter.UserViewHolder>() {
+
+    private var onItemClickListener: ((User) -> Unit)? = null
+
+    fun setOnItemClickListener(listener: (User) -> Unit) {
+        onItemClickListener = listener
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
         val itemView = LayoutInflater.from(parent.context).inflate(R.layout.person_profile_item, parent, false)
@@ -20,6 +27,9 @@ class UserAdapter (private var users: MutableList<User> = mutableListOf()) : Rec
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
         val currentUser = users[position]
         holder.bind(currentUser)
+        holder.itemView.setOnClickListener {
+            onItemClickListener?.invoke(currentUser)
+        }
     }
 
     override fun getItemCount(): Int {
