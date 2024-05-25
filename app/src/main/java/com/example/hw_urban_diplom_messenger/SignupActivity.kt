@@ -34,9 +34,9 @@ class SignupActivity : AppCompatActivity() {
                     if (task.isSuccessful) {
                         val userInfo = HashMap<String, String>()
                         userInfo["email"] = binding.emailEditText.text.toString()
-                        userInfo["username"] = binding.nameEditText.text.toString()
-                        userInfo["profileImage"] = ""
-                        userInfo["chats"] = ""
+                        userInfo["name"] = binding.nameEditText.text.toString()
+//                        userInfo["profileImage"] = ""
+//                        userInfo["chats"] = ""
                         FirebaseDatabase.getInstance().reference.child("Users").child(
                             FirebaseAuth.getInstance().currentUser!!.uid
                         ).setValue(userInfo)
