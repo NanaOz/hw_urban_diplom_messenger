@@ -31,7 +31,6 @@ class UsersFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
 
-
         binding = FragmentUsersBinding.inflate(inflater, container, false)
         val view = binding.root
 
@@ -42,16 +41,16 @@ class UsersFragment : Fragment() {
         retrieveUsersFromFirebase()
 
         usersAdapter.setOnItemClickListener { user ->
-//            val intent = Intent(activity, ChatActivity::class.java)
-//            intent.putExtra("userId", user.name)
-//            intent.putExtra("name", user.name)
-//            startActivity(intent)
-
             val currentUser = FirebaseAuth.getInstance().currentUser
             val userId = currentUser?.uid
             if (userId != null) {
-                val chatId = generateChatId(userId, user.userId) // Генерация уникального `chatId`
-                openChatActivity(chatId)
+                val chatId = generateChatId(userId, user.userId)
+
+                val intent = Intent(activity, ChatActivity::class.java)
+                intent.putExtra("chatId", chatId)
+                intent.putExtra("userName", user.name)
+                intent.putExtra("userProfileImageUri", user.profileImageUri)
+                startActivity(intent)
             }
         }
 
@@ -61,7 +60,8 @@ class UsersFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 val searchQuery = s.toString()
                 if (searchQuery.isNotEmpty()) {
-                    val filteredUsers = usersList.filter { it.name.contains(searchQuery, ignoreCase = true) }
+                    val filteredUsers =
+                        usersList.filter { it.name.contains(searchQuery, ignoreCase = true) }
                     usersAdapter.setUsers(filteredUsers.toMutableList())
                 } else {
 
@@ -72,19 +72,12 @@ class UsersFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-
         return view
-    }
-
-    private fun openChatActivity(chatId: String) {
-        val intent = Intent(activity, ChatActivity::class.java)
-        intent.putExtra("chatId", chatId)
-        startActivity(intent)
     }
 
     private fun generateChatId(userId1: String, userId2: String): String {
         val users = listOf(userId1, userId2)
-        val sortedUsers = users.sorted() // Сортируем для уникальности chatId между парами пользователей
+        val sortedUsers = users.sorted()
         return sortedUsers.joinToString("-")
     }
 
@@ -93,12 +86,20 @@ class UsersFragment : Fragment() {
         usersRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 usersList.clear()
+                val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
+
                 for (userSnapshot in dataSnapshot.children) {
                     val userId = userSnapshot.key.toString()
+                    if (userId == currentUserUid) {
+                        continue
+                    }
                     val userName = userSnapshot.child("name").value.toString()
                     val userProfileImageUri = userSnapshot.child("profileImageUri").value.toString()
 
-                    Log.d("UserAdapter", "Adding user - Id: $userId, Name: $userName, ProfileImageUri: $userProfileImageUri")
+                    Log.d(
+                        "UserAdapter",
+                        "Adding user - Id: $userId, Name: $userName, ProfileImageUri: $userProfileImageUri"
+                    )
 
                     val user = User(userName, userProfileImageUri, userId)
                     usersList.add(user)

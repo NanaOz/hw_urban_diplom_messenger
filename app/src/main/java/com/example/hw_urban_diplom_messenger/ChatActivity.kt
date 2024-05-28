@@ -1,9 +1,18 @@
 package com.example.hw_urban_diplom_messenger
 
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.Toast
+import androidx.core.app.ActivityCompat.finishAffinity
+import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.hw_urban_diplom_messenger.adapters.ChatAdapter
 import com.example.hw_urban_diplom_messenger.adapters.MessagesAdapter
@@ -11,12 +20,15 @@ import com.example.hw_urban_diplom_messenger.chats.Chat
 import com.example.hw_urban_diplom_messenger.chats.Message
 import com.example.hw_urban_diplom_messenger.databinding.ActivityChatBinding
 import com.example.hw_urban_diplom_messenger.databinding.FragmentChatsBinding
+import com.google.android.play.integrity.internal.al
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.squareup.picasso.Picasso
+import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Objects
@@ -32,15 +44,17 @@ class ChatActivity : AppCompatActivity() {
         binding = ActivityChatBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val userId = intent.getStringExtra("userId")
-        val userName = intent.getStringExtra("name")
+        setSupportActionBar(binding.toolbar)
+
+        val userName = intent.getStringExtra("userName")
+        val profileImageUri = intent.getStringExtra("userProfileImageUri")
         chatId = intent.getStringExtra("chatId") ?: ""
 
-        messagesAdapter = MessagesAdapter(mutableListOf()) // Initialize the adapter
+        messagesAdapter = MessagesAdapter(mutableListOf())
         binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.messagesRecyclerView.adapter = messagesAdapter
 
-        loadMessages() // Load existing messages
+        loadMessages()
 
         binding.sendMessageImageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString()
@@ -51,6 +65,27 @@ class ChatActivity : AppCompatActivity() {
                 Toast.makeText(this, "Message field cannot be empty", Toast.LENGTH_SHORT).show()
             }
         }
+
+        binding.titleTextView.text = userName
+        Picasso.get()
+            .load(profileImageUri)
+            .placeholder(R.drawable.person)
+            .error(R.drawable.person)
+            .into(object : com.squareup.picasso.Target {
+                override fun onBitmapLoaded(
+                    bitmap: Bitmap?,
+                    from: Picasso.LoadedFrom?
+                ) {
+                    val drawable = BitmapDrawable(resources, bitmap)
+                    binding.photoImageView.setImageDrawable(drawable)
+                }
+
+                override fun onBitmapFailed(e: Exception?, errorDrawable: Drawable?) {
+                    Log.e("Picasso", "Failed to load image: $e")
+                }
+
+                override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
+        })
     }
 
     private fun sendMessage(message: String) {
@@ -83,6 +118,7 @@ class ChatActivity : AppCompatActivity() {
                             messages.add(message)
                         }
                     }
+
                     messagesAdapter.updateMessages(messages)
                     messagesAdapter.notifyDataSetChanged()
 
@@ -95,58 +131,42 @@ class ChatActivity : AppCompatActivity() {
                     Log.e("loadMessages", "Failed to load messages: $error")
                 }
             })
+
+    }
+
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.main_menu, menu)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.action_profile -> {
+                startActivity(Intent(this, MyProfileActivity::class.java))
+                return true
+            }
+
+            R.id.action_logout -> {
+                FirebaseAuth.getInstance().signOut()
+                val intent = Intent(this, LoginActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish()
+                val sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean("isLoggedIn", false).apply()
+            }
+
+            R.id.action_about -> {
+                val intent = Intent(this, AboutActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+
+            R.id.action_exit -> {
+                finishAffinity()
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 }
-
-//        chatAdapter = ChatAdapter(ArrayList(), FirebaseAuth.getInstance().currentUser?.uid ?: "")
-//
-//        val userId = intent.getStringExtra("userId")
-//        val userName = intent.getStringExtra("userName")
-//
-//        val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
-//
-//        binding.sendMessageImageButton.setOnClickListener {
-//            val message = binding.messageEditText.text.toString().trim()
-//
-//            if (message.isNotEmpty() && currentUserUid != null) {
-//                // Отправка сообщения в Firebase Database
-//                val database = FirebaseDatabase.getInstance()
-//                val chatRef = database.getReference("chats")
-//
-//                val newChat = userName?.let { it1 ->
-//                    Chat("your_chat_id", "your_chat_name", currentUserUid,
-//                        it1
-//                    )
-//                }
-//                val newChatRef = chatRef.push()
-//                newChatRef.setValue(newChat)
-//
-//                // Очистить поле ввода сообщения
-//                binding.messageEditText.text.clear()
-//            }
-//        }
-//        // Отобразить сообщения в RecyclerView
-//        val layoutManager = LinearLayoutManager(this)
-//        binding.messagesRecyclerView.layoutManager = layoutManager
-//        binding.messagesRecyclerView.adapter = chatAdapter
-//
-//        // Слушатель изменений в документе БД
-//        val chatRef = FirebaseDatabase.getInstance().getReference("chats")
-//        chatRef.addChildEventListener(object : ChildEventListener {
-//            override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
-//                val chat = snapshot.getValue(Chat::class.java)
-//                if (chat != null && (chat.chatId == "your_chat_id")) {
-//                    chatAdapter.addChat(chat)
-//                    layoutManager.scrollToPosition(chatAdapter.itemCount - 1)
-//                }
-//            }
-//
-//            override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {}
-//            override fun onChildRemoved(snapshot: DataSnapshot) {}
-//            override fun onChildMoved(snapshot: DataSnapshot, previousChildName: String?) {}
-//            override fun onCancelled(error: DatabaseError) {}
-//        })
-//    }
-//
-//
-//}

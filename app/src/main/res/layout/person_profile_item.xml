@@ -2,14 +2,24 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_margin="14dp"
     android:orientation="horizontal">
 
-    <ImageView
-        android:id="@+id/userImageView"
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="60dp"
         android:layout_height="60dp"
-        android:src="@drawable/person" />
+        app:cardCornerRadius="50dp">
+
+        <ImageView
+            android:id="@+id/userImageView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:src="@drawable/person"
+            android:scaleType="centerCrop"/>
+    </com.google.android.material.card.MaterialCardView>
+
+
 
     <TextView
         android:id="@+id/usernameTextView"
@@ -18,6 +28,7 @@
         android:text="@string/usernsme"
         android:textSize="16sp"
         android:textStyle="bold"
+        android:layout_marginLeft="6dp"
         android:layout_marginTop="12dp"/>
 
 </LinearLayout>
