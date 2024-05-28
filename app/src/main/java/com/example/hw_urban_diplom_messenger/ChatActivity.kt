@@ -85,6 +85,10 @@ class ChatActivity : AppCompatActivity() {
                     }
                     messagesAdapter.updateMessages(messages)
                     messagesAdapter.notifyDataSetChanged()
+
+                    binding.messagesRecyclerView.post {
+                        binding.messagesRecyclerView.scrollToPosition(messagesAdapter.itemCount - 1)
+                    }
                 }
 
                 override fun onCancelled(error: DatabaseError) {
