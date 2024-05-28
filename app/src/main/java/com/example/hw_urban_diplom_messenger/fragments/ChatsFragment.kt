@@ -1,5 +1,6 @@
 package com.example.hw_urban_diplom_messenger.fragments
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -7,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.hw_urban_diplom_messenger.ChatActivity
 import com.example.hw_urban_diplom_messenger.R
 import com.example.hw_urban_diplom_messenger.adapters.ChatAdapter
 import com.example.hw_urban_diplom_messenger.adapters.UserAdapter
@@ -22,7 +24,7 @@ import com.google.firebase.database.ValueEventListener
 class ChatsFragment : Fragment() {
 
     private lateinit var binding: FragmentChatsBinding
-    private lateinit var chatAdapter: ChatAdapter
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -30,9 +32,6 @@ class ChatsFragment : Fragment() {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         val view = binding.root
         loadUsers()
-//        val chatsList = getChatsList()
-//        chatAdapter = ChatAdapter(chatsList)
-//        binding.chatsRecyclerView.adapter = chatAdapter
 
         return view
     }
@@ -49,7 +48,7 @@ class ChatsFragment : Fragment() {
                         val uid = userSnapshot.key
                         val username = userSnapshot.child("name").value.toString()
                         val profileImage = userSnapshot.child("profileImageUri").value.toString()
-                        users.add(User( username, profileImage))
+                        uid?.let { User( username, profileImage, it) }?.let { users.add(it) }
                     }
                     binding.chatsRecyclerView.layoutManager = LinearLayoutManager(context)
                     binding.chatsRecyclerView.addItemDecoration(
@@ -63,6 +62,13 @@ class ChatsFragment : Fragment() {
 
                 override fun onCancelled(error: DatabaseError) {}
             })
+    }
+
+    private fun openChatActivity(chatId: String, userId: String) {
+        val intent = Intent(activity, ChatActivity::class.java)
+        intent.putExtra("chatId", chatId)
+        intent.putExtra("userId", userId)
+        startActivity(intent)
     }
 
     private fun getChatsList(): ArrayList<Chat> {

@@ -10,7 +10,7 @@ import com.example.hw_urban_diplom_messenger.chats.Message
 import com.google.firebase.auth.FirebaseAuth
 import java.util.Objects
 
-class MessagesAdapter(private val messages: List<Message>) :
+class MessagesAdapter(private val messages: MutableList<Message>) :
     RecyclerView.Adapter<MessagesAdapter.MessageViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
         val view = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
@@ -31,6 +31,11 @@ class MessagesAdapter(private val messages: List<Message>) :
             R.layout.message_from_user_item
         else
             R.layout.message_to_user_item
+    }
+
+    fun updateMessages(newMessages: List<Message>) {
+        messages.clear()
+        messages.addAll(newMessages)
     }
 
     class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

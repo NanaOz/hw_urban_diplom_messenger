@@ -24,6 +24,9 @@ import java.util.Objects
 class ChatActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityChatBinding
+    private lateinit var messagesAdapter: MessagesAdapter
+    private lateinit var chatId: String
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityChatBinding.inflate(layoutInflater)
@@ -31,29 +34,32 @@ class ChatActivity : AppCompatActivity() {
 
         val userId = intent.getStringExtra("userId")
         val userName = intent.getStringExtra("name")
+        chatId = intent.getStringExtra("chatId") ?: ""
 
-        val chatId = intent.getStringExtra("chatId")
-        loadMessages(chatId)
+        messagesAdapter = MessagesAdapter(mutableListOf()) // Initialize the adapter
+        binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
+        binding.messagesRecyclerView.adapter = messagesAdapter
+
+        loadMessages() // Load existing messages
+
         binding.sendMessageImageButton.setOnClickListener {
             val message = binding.messageEditText.text.toString()
-            if (message.isEmpty()) {
+            if (message.isNotEmpty()) {
+                sendMessage(message)
+            } else {
                 Toast.makeText(this, "Message field cannot be empty", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
             }
-
-            binding.messageEditText.setText("") //clearing the edit text
-            sendMessage(chatId, message)
         }
     }
 
-    private fun sendMessage(chatId: String?, message: String) {
-        if (chatId == null) return
-        val messageInfo = HashMap<String, String>()
-        messageInfo["text"] = message
+    private fun sendMessage(message: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val ownerId = currentUser?.uid
         if (ownerId != null) {
-            messageInfo["ownerId"] = ownerId
+            val messageInfo = mapOf(
+                "text" to message,
+                "ownerId" to ownerId
+            )
             FirebaseDatabase.getInstance().reference.child("Chats").child(chatId)
                 .child("messages").push().setValue(messageInfo)
         } else {
@@ -61,24 +67,28 @@ class ChatActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadMessages(chatId: String?) {
-        if (chatId == null) return
+    private fun loadMessages() {
         FirebaseDatabase.getInstance().reference.child("Chats")
             .child(chatId).child("messages").addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    if (!snapshot.exists()) return
-                    val messages: MutableList<Message> = ArrayList()
+                    val messages: MutableList<Message> = mutableListOf()
+                    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
                     for (messageSnapshot in snapshot.children) {
                         val messageId = messageSnapshot.key
                         val ownerId = messageSnapshot.child("ownerId").value.toString()
                         val text = messageSnapshot.child("text").value.toString()
-                        messageId?.let { Message(it, ownerId, text,) }?.let { messages.add(it) }
+                        val message = messageId?.let { Message(it, ownerId, text) }
+                        if (message != null) {
+                            messages.add(message)
+                        }
                     }
-                    binding.messagesRecyclerView.layoutManager = LinearLayoutManager(baseContext)
-                    binding.messagesRecyclerView.adapter = MessagesAdapter(messages)
+                    messagesAdapter.updateMessages(messages)
+                    messagesAdapter.notifyDataSetChanged()
                 }
 
-                override fun onCancelled(error: DatabaseError) {}
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("loadMessages", "Failed to load messages: $error")
+                }
             })
     }
 }

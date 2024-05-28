@@ -14,6 +14,8 @@ import com.example.hw_urban_diplom_messenger.ChatActivity
 import com.example.hw_urban_diplom_messenger.databinding.FragmentUsersBinding
 import com.example.hw_urban_diplom_messenger.users.User
 import com.example.hw_urban_diplom_messenger.adapters.UserAdapter
+import com.google.android.play.integrity.internal.al
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -40,10 +42,17 @@ class UsersFragment : Fragment() {
         retrieveUsersFromFirebase()
 
         usersAdapter.setOnItemClickListener { user ->
-            val intent = Intent(activity, ChatActivity::class.java)
-            intent.putExtra("userId", user.name)
-            intent.putExtra("userName", user.name)
-            startActivity(intent)
+//            val intent = Intent(activity, ChatActivity::class.java)
+//            intent.putExtra("userId", user.name)
+//            intent.putExtra("name", user.name)
+//            startActivity(intent)
+
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            val userId = currentUser?.uid
+            if (userId != null) {
+                val chatId = generateChatId(userId, user.userId) // Генерация уникального `chatId`
+                openChatActivity(chatId)
+            }
         }
 
         binding.searchEditText.addTextChangedListener(object : TextWatcher {
@@ -66,6 +75,19 @@ class UsersFragment : Fragment() {
 
         return view
     }
+
+    private fun openChatActivity(chatId: String) {
+        val intent = Intent(activity, ChatActivity::class.java)
+        intent.putExtra("chatId", chatId)
+        startActivity(intent)
+    }
+
+    private fun generateChatId(userId1: String, userId2: String): String {
+        val users = listOf(userId1, userId2)
+        val sortedUsers = users.sorted() // Сортируем для уникальности chatId между парами пользователей
+        return sortedUsers.joinToString("-")
+    }
+
     private fun retrieveUsersFromFirebase() {
         val usersRef = FirebaseDatabase.getInstance().getReference("Users")
         usersRef.addValueEventListener(object : ValueEventListener {
@@ -78,7 +100,7 @@ class UsersFragment : Fragment() {
 
                     Log.d("UserAdapter", "Adding user - Id: $userId, Name: $userName, ProfileImageUri: $userProfileImageUri")
 
-                    val user = User(userName, userProfileImageUri)
+                    val user = User(userName, userProfileImageUri, userId)
                     usersList.add(user)
                 }
                 usersAdapter.setUsers(usersList)
