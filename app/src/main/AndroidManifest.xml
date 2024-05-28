@@ -15,6 +15,9 @@
         android:theme="@style/Theme.Hw_urban_diplom_messenger"
         tools:targetApi="31">
         <activity
+            android:name=".ProfileInfoActivity"
+            android:exported="false" />
+        <activity
             android:name=".ChatActivity"
             android:exported="false" />
         <activity

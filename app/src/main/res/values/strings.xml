@@ -25,4 +25,8 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="search">Search</string>
+    <string name="phone">Phone</string>
+    <string name="to_call">To call</string>
+    <string name="send_an_sms">Send an SMS</string>
+    <string name="the_identifier">The identifier:</string>
 </resources>
