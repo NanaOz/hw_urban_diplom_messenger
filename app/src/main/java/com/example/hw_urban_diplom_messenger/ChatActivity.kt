@@ -46,6 +46,7 @@ class ChatActivity : AppCompatActivity() {
             val message = binding.messageEditText.text.toString()
             if (message.isNotEmpty()) {
                 sendMessage(message)
+                binding.messageEditText.text.clear()
             } else {
                 Toast.makeText(this, "Message field cannot be empty", Toast.LENGTH_SHORT).show()
             }
