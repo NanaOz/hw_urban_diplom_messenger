@@ -2,6 +2,7 @@ package com.example.hw_urban_diplom_messenger.fragments
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -24,6 +25,10 @@ import com.google.firebase.database.ValueEventListener
 class ChatsFragment : Fragment() {
 
     private lateinit var binding: FragmentChatsBinding
+    private lateinit var usersAdapter: UserAdapter
+    private val usersList: MutableList<User> = mutableListOf()
+    private val chatsList: MutableList<Chat> = mutableListOf()
+    private val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -31,69 +36,85 @@ class ChatsFragment : Fragment() {
     ): View? {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         val view = binding.root
-        loadUsers()
+
+        usersAdapter = UserAdapter(usersList)
+        binding.chatsRecyclerView.layoutManager = LinearLayoutManager(context)
+        binding.chatsRecyclerView.addItemDecoration(
+            DividerItemDecoration(
+                context,
+                DividerItemDecoration.VERTICAL
+            )
+        )
+        binding.chatsRecyclerView.adapter = usersAdapter
+
+        retrieveChatsFromFirebase()
+
+        usersAdapter.setOnItemClickListener { user ->
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            val userId = currentUser?.uid
+            if (userId != null) {
+                val chatId = generateChatId(userId, user.userId)
+                val intent = Intent(activity, ChatActivity::class.java)
+                intent.putExtra("chatId", chatId)
+                intent.putExtra("userName", user.name)
+                intent.putExtra("userProfileImageUri", user.profileImageUri)
+                startActivity(intent)
+            }
+        }
 
         return view
     }
 
-    private fun loadUsers() {
-        val users = ArrayList<User>()
-        FirebaseDatabase.getInstance().reference.child("Users")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    for (userSnapshot in snapshot.children) {
-                        if (userSnapshot.key == FirebaseAuth.getInstance().currentUser!!.uid) {
-                            continue
-                        }
-                        val uid = userSnapshot.key
-                        val username = userSnapshot.child("name").value.toString()
-                        val profileImage = userSnapshot.child("profileImageUri").value.toString()
-                        uid?.let { User( username, profileImage, it) }?.let { users.add(it) }
-                    }
-                    binding.chatsRecyclerView.layoutManager = LinearLayoutManager(context)
-                    binding.chatsRecyclerView.addItemDecoration(
-                        DividerItemDecoration(
-                            context,
-                            DividerItemDecoration.VERTICAL
-                        )
-                    )
-                    binding.chatsRecyclerView.adapter = UserAdapter(users)
-                }
-
-                override fun onCancelled(error: DatabaseError) {}
-            })
+    private fun generateChatId(userId1: String, userId2: String): String {
+        val users = listOf(userId1, userId2)
+        val sortedUsers = users.sorted()
+        return sortedUsers.joinToString("-")
     }
 
-    private fun openChatActivity(chatId: String, userId: String) {
-        val intent = Intent(activity, ChatActivity::class.java)
-        intent.putExtra("chatId", chatId)
-        intent.putExtra("userId", userId)
-        startActivity(intent)
-    }
+    private fun retrieveChatsFromFirebase() {
+        val chatsRef = FirebaseDatabase.getInstance().getReference("Chats")
 
-    private fun getChatsList(): ArrayList<Chat> {
-        val chatsList = ArrayList<Chat>()
+        chatsRef.addValueEventListener(object : ValueEventListener {
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                chatsList.clear()
 
-        // Retrieve the chats of the logged-in user from the Firebase database
-        val userId = FirebaseAuth.getInstance().currentUser!!.uid
-        FirebaseDatabase.getInstance().reference.child("Users").child(userId).child("chats")
-            .addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(dataSnapshot: DataSnapshot) {
-                    for (chatSnapshot in dataSnapshot.children) {
-                        val chat = chatSnapshot.getValue(Chat::class.java)
-                        if (chat != null) {
-                            chatsList.add(chat)
-                        }
+                for (chatSnapshot in dataSnapshot.children) {
+                    val chatId = chatSnapshot.key.toString()
+                    val userIds = chatId.split("-")
+                    val userId1 = userIds[0]
+                    val userId2 = userIds[1]
+
+                    val userIdToDisplay = if (userId1 != currentUserUid) userId1 else userId2
+                    val existingChat = usersList.find { it.userId == userIdToDisplay }
+
+                    if (existingChat == null) {
+                        val userRef = FirebaseDatabase.getInstance().getReference("Users")
+                            .child(userIdToDisplay)
+                        userRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                            override fun onDataChange(userSnapshot: DataSnapshot) {
+                                val userName = userSnapshot.child("name").value.toString()
+                                val userProfileImageUri =
+                                    userSnapshot.child("profileImageUri").value.toString()
+                                val user = User(userName, userProfileImageUri, userIdToDisplay)
+
+                                usersList.add(user)
+                                usersAdapter.setUsers(usersList)
+                            }
+
+                            override fun onCancelled(databaseError: DatabaseError) {
+                                Log.e(
+                                    "ChatsFragment",
+                                    "Failed to retrieve user data: $databaseError"
+                                )
+                            }
+                        })
                     }
-                    // Notify the adapter that the data has changed
-//                    chatAdapter.notifyDataSetChanged()
                 }
+            }
 
-                override fun onCancelled(databaseError: DatabaseError) {
-                    // Handle the error
-                }
-            })
-
-        return chatsList
+            override fun onCancelled(databaseError: DatabaseError) {
+                Log.e("ChatsFragment", "Failed to retrieve chats: $databaseError")
+            }
+        })
     }
 }

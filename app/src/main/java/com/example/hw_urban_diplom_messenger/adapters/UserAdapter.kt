@@ -60,7 +60,6 @@ class UserAdapter (private var users: MutableList<User> = mutableListOf()) : Rec
         fun bind(user: User) {
             usernameTextView.text = user.name
 
-            // Load user image using Picasso or show a placeholder image if image URL is not available
             if (user.profileImageUri.isNotEmpty()) {
                 Picasso.get().load(user.profileImageUri).placeholder(R.drawable.person).error(R.drawable.person).into(userImageView)
             } else {
