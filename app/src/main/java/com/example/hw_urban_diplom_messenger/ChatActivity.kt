@@ -1,5 +1,6 @@
 package com.example.hw_urban_diplom_messenger
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
@@ -50,7 +51,14 @@ class ChatActivity : AppCompatActivity() {
         val profileImageUri = intent.getStringExtra("userProfileImageUri")
         chatId = intent.getStringExtra("chatId") ?: ""
 
-        messagesAdapter = MessagesAdapter(mutableListOf())
+//        messagesAdapter = MessagesAdapter(mutableListOf())
+
+        messagesAdapter = MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
+            override fun onMessageLongClick(message: Message) {
+                showDeleteConfirmationDialog(message)
+            }
+        })
+
         binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.messagesRecyclerView.adapter = messagesAdapter
 
@@ -87,6 +95,24 @@ class ChatActivity : AppCompatActivity() {
                 override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
         })
     }
+
+    private fun showDeleteConfirmationDialog(message: Message) {
+        val builder = AlertDialog.Builder(this)
+        builder.setTitle("Delete Message")
+        builder.setMessage("Are you sure you want to delete this message?")
+        builder.setPositiveButton("Yes") { _, _ ->
+            deleteMessage(message)
+        }
+        builder.setNegativeButton("Cancel", null)
+        builder.show()
+    }
+
+    private fun deleteMessage(message: Message) {
+        FirebaseDatabase.getInstance().reference.child("Chats").child(chatId)
+            .child("messages").child(message.id)
+            .removeValue()
+    }
+
 
     private fun sendMessage(message: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -131,7 +157,6 @@ class ChatActivity : AppCompatActivity() {
                     Log.e("loadMessages", "Failed to load messages: $error")
                 }
             })
-
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

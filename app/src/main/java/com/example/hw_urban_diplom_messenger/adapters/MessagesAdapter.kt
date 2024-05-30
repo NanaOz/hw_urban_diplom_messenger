@@ -10,11 +10,11 @@ import com.example.hw_urban_diplom_messenger.chats.Message
 import com.google.firebase.auth.FirebaseAuth
 import java.util.Objects
 
-class MessagesAdapter(private val messages: MutableList<Message>) :
+class MessagesAdapter(private val messages: MutableList<Message>, private val messageLongClickListener: MessageLongClickListener) :
     RecyclerView.Adapter<MessagesAdapter.MessageViewHolder>() {
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
-        return MessageViewHolder(view)
+
+    interface MessageLongClickListener {
+        fun onMessageLongClick(message: Message)
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
@@ -24,6 +24,11 @@ class MessagesAdapter(private val messages: MutableList<Message>) :
 
     override fun getItemCount(): Int {
         return messages.size
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MessageViewHolder {
+        val view = LayoutInflater.from(parent.context).inflate(viewType, parent, false)
+        return MessageViewHolder(view, messages, messageLongClickListener)
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -38,12 +43,15 @@ class MessagesAdapter(private val messages: MutableList<Message>) :
         messages.addAll(newMessages)
     }
 
-    class MessageViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    class MessageViewHolder(itemView: View, private val messages: List<Message>, private val messageLongClickListener: MessageLongClickListener) : RecyclerView.ViewHolder(itemView) {
         var messageTv: TextView
 
         init {
             messageTv = itemView.findViewById(R.id.messageTextView)
-
+            itemView.setOnLongClickListener {
+                messageLongClickListener.onMessageLongClick(messages[adapterPosition])
+                true
+            }
         }
     }
 }
