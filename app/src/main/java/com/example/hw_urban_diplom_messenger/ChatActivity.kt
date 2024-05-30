@@ -142,8 +142,9 @@ class ChatActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.action_profile -> {
+                val userId = intent.getStringExtra("userId")
                 val intent = Intent(this, ProfileInfoActivity::class.java)
-                //TODO
+                intent.putExtra("userId", userId)
                 startActivity(intent)
                 return true
             }

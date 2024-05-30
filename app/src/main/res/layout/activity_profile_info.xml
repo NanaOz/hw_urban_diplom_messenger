@@ -86,7 +86,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/nameEditText"
+                    android:id="@+id/nameTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -110,7 +110,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/lastNameEditText"
+                    android:id="@+id/lastNameTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -134,7 +134,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/occupationEditText"
+                    android:id="@+id/occupationTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -158,7 +158,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/adressEditText"
+                    android:id="@+id/adressTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -182,7 +182,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/ageEditText"
+                    android:id="@+id/ageTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
@@ -206,7 +206,7 @@
                     android:textStyle="bold" />
 
                 <TextView
-                    android:id="@+id/phoneEditText"
+                    android:id="@+id/phoneTextView"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
