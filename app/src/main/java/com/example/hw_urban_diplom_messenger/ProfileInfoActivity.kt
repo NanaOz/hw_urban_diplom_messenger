@@ -1,5 +1,7 @@
 package com.example.hw_urban_diplom_messenger
 
+import android.content.Intent
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -15,6 +17,7 @@ import com.squareup.picasso.Picasso
 class ProfileInfoActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityProfileInfoBinding
+    private var phoneNumber: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProfileInfoBinding.inflate(layoutInflater)
@@ -31,7 +34,7 @@ class ProfileInfoActivity : AppCompatActivity() {
                 val address = dataSnapshot.child("address").getValue(String::class.java)
                 val age = dataSnapshot.child("age").getValue(String::class.java)
                 val profileImageUri = dataSnapshot.child("profileImageUri").getValue(String::class.java)
-                val phone = dataSnapshot.child("phoneNumber").getValue(String::class.java)
+                phoneNumber = dataSnapshot.child("phoneNumber").getValue(String::class.java)
 
                 binding.usernameTextView.text = name
                 binding.nameTextView.text = name
@@ -39,7 +42,7 @@ class ProfileInfoActivity : AppCompatActivity() {
                 binding.occupationTextView.text = occupation
                 binding.adressTextView.text = address
                 binding.ageTextView.text = age
-                binding.phoneTextView.text = phone
+                binding.phoneTextView.text = phoneNumber
 
                 Picasso.get()
                     .load(profileImageUri)
@@ -52,5 +55,23 @@ class ProfileInfoActivity : AppCompatActivity() {
                 Log.e("ProfileInfoActivity", "User data could not be uploaded: $error")
             }
         })
+
+        binding.toCallButton.setOnClickListener {
+            phoneNumber?.let { number ->
+                val callIntent = Intent(Intent.ACTION_DIAL).apply {
+                    data = Uri.parse("tel:$number")
+                }
+                startActivity(callIntent)
+            }
+        }
+
+        binding.sendAnSmsButton.setOnClickListener {
+            phoneNumber?.let { number ->
+                val smsIntent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("smsto:$number")
+                }
+                startActivity(smsIntent)
+            }
+        }
     }
 }
