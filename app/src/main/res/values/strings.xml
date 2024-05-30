@@ -22,11 +22,23 @@
     <string name="name">Name</string>
     <string name="not_verified">NOT VERIFIED</string>
     <string name="method_of_entry">Method of entry:</string>
-    <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="search">Search</string>
     <string name="phone">Phone</string>
     <string name="to_call">To call</string>
     <string name="send_an_sms">Send an SMS</string>
     <string name="the_identifier">The identifier:</string>
+    <string name="apply">Apply</string>
+
+    <string-array name="country_codes">
+        <item>+7</item>
+        <item>+375</item>
+        <item>+995</item>
+    </string-array>
+
+    <array name="country_flags">
+        <item>@drawable/rucountrie</item>
+        <item>@drawable/blcountrie</item>
+        <item>@drawable/grcountrie</item>
+    </array>
 </resources>

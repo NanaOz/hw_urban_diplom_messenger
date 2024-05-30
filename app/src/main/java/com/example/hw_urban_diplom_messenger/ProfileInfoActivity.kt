@@ -31,7 +31,7 @@ class ProfileInfoActivity : AppCompatActivity() {
                 val address = dataSnapshot.child("address").getValue(String::class.java)
                 val age = dataSnapshot.child("age").getValue(String::class.java)
                 val profileImageUri = dataSnapshot.child("profileImageUri").getValue(String::class.java)
-                val phone = dataSnapshot.child("phone").getValue(String::class.java)
+                val phone = dataSnapshot.child("phoneNumber").getValue(String::class.java)
 
                 binding.usernameTextView.text = name
                 binding.nameTextView.text = name
