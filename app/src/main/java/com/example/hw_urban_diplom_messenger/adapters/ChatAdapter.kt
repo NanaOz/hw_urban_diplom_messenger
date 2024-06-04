@@ -22,51 +22,57 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.squareup.picasso.Picasso
 
-class ChatAdapter(private val chats: MutableList<Chat>) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
-    inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val userChatImageView: ImageView = itemView.findViewById(R.id.userChatImageView)
-        val usernameChatTextView: TextView = itemView.findViewById(R.id.usernameChatTextView)
+class ChatAdapter(private var users: MutableList<User> = mutableListOf()) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
+    private var onItemClickListener: ((User) -> Unit)? = null
+
+    fun setOnItemClickListener(listener: (User) -> Unit) {
+        onItemClickListener = listener
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChatViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.person_chat_item, parent, false)
-        return ChatViewHolder(view)
+        val itemView =
+            LayoutInflater.from(parent.context).inflate(R.layout.person_chat_item, parent, false)
+        return ChatViewHolder(itemView)
     }
 
     override fun onBindViewHolder(holder: ChatViewHolder, position: Int) {
-        val chat = chats[position]
-
-        holder.usernameChatTextView.text = chat.chatName
-
-        val usersRef = FirebaseDatabase.getInstance().getReference("Users").child(chat.userId1)
-        usersRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val profileImageUri = snapshot.child("profileImageUri").getValue(String::class.java)
-                if (!profileImageUri.isNullOrEmpty()) {
-                    Picasso.get()
-                        .load(profileImageUri)
-                        .placeholder(R.drawable.person)
-                        .error(R.drawable.person)
-                        .into(holder.userChatImageView)
-                } else {
-                    holder.userChatImageView.setImageResource(R.drawable.person)
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("ChatAdapter", "Failed to retrieve user data: $error")
-            }
-        })
-
+        val currentUser = users[position]
+        holder.bind(currentUser)
         holder.itemView.setOnClickListener {
-            val intent = Intent(holder.itemView.context, ChatActivity::class.java)
-            intent.putExtra("chatId", chat.chatId)
-            holder.itemView.context.startActivity(intent)
+            onItemClickListener?.invoke(currentUser)
         }
     }
 
     override fun getItemCount(): Int {
-        return chats.size
+        return users.size
     }
 
+    fun setUsers(newUsers: List<User>) {
+        val newUsersList = mutableListOf<User>()
+        newUsersList.addAll(newUsers)
+        users.clear()
+        users.addAll(newUsersList)
+        Log.d("UserAdapter", "New users set, count: ${users.size}")
+        notifyDataSetChanged()
+    }
+
+    inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+        private val userImageView: ImageView = itemView.findViewById(R.id.userChatImageView)
+        private val usernameTextView: TextView = itemView.findViewById(R.id.usernameChatTextView)
+        private val lastMessageChatTextView: TextView =
+            itemView.findViewById(R.id.lastMessageChatTextView)
+
+        fun bind(user: User) {
+            usernameTextView.text = user.name
+            lastMessageChatTextView.text = user.lastMessage
+
+            if (user.profileImageUri.isNotEmpty()) {
+                Picasso.get().load(user.profileImageUri).placeholder(R.drawable.person)
+                    .error(R.drawable.person).into(userImageView)
+            } else {
+                userImageView.setImageResource(R.drawable.person)
+            }
+        }
+    }
 }

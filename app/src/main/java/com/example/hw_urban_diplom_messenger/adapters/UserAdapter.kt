@@ -37,14 +37,6 @@ class UserAdapter (private var users: MutableList<User> = mutableListOf()) : Rec
     }
 
     fun setUsers(newUsers: List<User>) {
-//        Log.d("UserAdapter", "users, count AFTER: ${users.size}")
-//        Log.d("UserAdapter", "newUsers, count AFTER: ${newUsers.size}")
-////        users.clear()
-////        users.addAll(newUsers)
-//        Log.d("UserAdapter", "newUsers, count BEFORE: ${newUsers.size}")
-//        Log.d("UserAdapter", "users, count BEFORE: ${users.size}")
-//        notifyDataSetChanged()
-
         val newUsersList = mutableListOf<User>()
         newUsersList.addAll(newUsers)
         users.clear()

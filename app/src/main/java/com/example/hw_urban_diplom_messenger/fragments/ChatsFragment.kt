@@ -25,7 +25,9 @@ import com.google.firebase.database.ValueEventListener
 class ChatsFragment : Fragment() {
 
     private lateinit var binding: FragmentChatsBinding
-    private lateinit var usersAdapter: UserAdapter
+
+    //    private lateinit var usersAdapter: UserAdapter
+    private lateinit var usersAdapter: ChatAdapter
     private val usersList: MutableList<User> = mutableListOf()
     private val chatsList: MutableList<Chat> = mutableListOf()
     private val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
@@ -37,7 +39,8 @@ class ChatsFragment : Fragment() {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         val view = binding.root
 
-        usersAdapter = UserAdapter(usersList)
+//        usersAdapter = UserAdapter(usersList)
+        usersAdapter = ChatAdapter(usersList)
         binding.chatsRecyclerView.layoutManager = LinearLayoutManager(context)
         binding.chatsRecyclerView.addItemDecoration(
             DividerItemDecoration(
@@ -86,7 +89,6 @@ class ChatsFragment : Fragment() {
                     val userId2 = userIds[1]
 
                     if (userId1 == currentUserUid || userId2 == currentUserUid) {
-
                         val userIdToDisplay = if (userId1 != currentUserUid) userId1 else userId2
                         val existingChat = usersList.find { it.userId == userIdToDisplay }
 
@@ -96,19 +98,39 @@ class ChatsFragment : Fragment() {
                             userRef.addListenerForSingleValueEvent(object : ValueEventListener {
                                 override fun onDataChange(userSnapshot: DataSnapshot) {
                                     val userName = userSnapshot.child("name").value.toString()
-                                    val userProfileImageUri =
-                                        userSnapshot.child("profileImageUri").value.toString()
+                                    val userProfileImageUri = userSnapshot.child("profileImageUri").value.toString()
                                     val user = User(userName, userProfileImageUri, userIdToDisplay)
 
-                                    usersList.add(user)
-                                    usersAdapter.setUsers(usersList)
+                                    // Fetch last message from the "messages" node
+                                    val messagesRef = FirebaseDatabase.getInstance().getReference("Chats/$chatId/messages")
+                                    messagesRef.limitToLast(1).addListenerForSingleValueEvent(object : ValueEventListener {
+                                        override fun onDataChange(messagesSnapshot: DataSnapshot) {
+                                            if (messagesSnapshot.exists()) {
+                                                val lastMessageSnapshot = messagesSnapshot.children.first()
+                                                val lastMessageText = lastMessageSnapshot.child("text").value.toString()
+
+                                                // Truncate message to 20 characters and add ellipsis
+                                                val limitedLastMessage = if (lastMessageText.length > 20) {
+                                                    "${lastMessageText.substring(0, 25)}..."
+                                                } else {
+                                                    lastMessageText
+                                                }
+
+                                                user.lastMessage = limitedLastMessage
+
+                                                usersList.add(user)
+                                                usersAdapter.setUsers(usersList)
+                                            }
+                                        }
+
+                                        override fun onCancelled(databaseError: DatabaseError) {
+                                            Log.e("ChatsFragment", "Failed to retrieve messages: $databaseError")
+                                        }
+                                    })
                                 }
 
                                 override fun onCancelled(databaseError: DatabaseError) {
-                                    Log.e(
-                                        "ChatsFragment",
-                                        "Failed to retrieve user data: $databaseError"
-                                    )
+                                    Log.e("ChatsFragment", "Failed to retrieve user data: $databaseError")
                                 }
                             })
                         }
@@ -122,3 +144,54 @@ class ChatsFragment : Fragment() {
         })
     }
 }
+
+//    private fun retrieveChatsFromFirebase() {
+//        val chatsRef = FirebaseDatabase.getInstance().getReference("Chats")
+//
+//        chatsRef.addValueEventListener(object : ValueEventListener {
+//            override fun onDataChange(dataSnapshot: DataSnapshot) {
+//                chatsList.clear()
+//
+//                for (chatSnapshot in dataSnapshot.children) {
+//                    val chatId = chatSnapshot.key.toString()
+//                    val userIds = chatId.split("-")
+//                    val userId1 = userIds[0]
+//                    val userId2 = userIds[1]
+//
+//                    if (userId1 == currentUserUid || userId2 == currentUserUid) {
+//
+//                        val userIdToDisplay = if (userId1 != currentUserUid) userId1 else userId2
+//                        val existingChat = usersList.find { it.userId == userIdToDisplay }
+//
+//                        if (existingChat == null) {
+//                            val userRef = FirebaseDatabase.getInstance().getReference("Users")
+//                                .child(userIdToDisplay)
+//                            userRef.addListenerForSingleValueEvent(object : ValueEventListener {
+//                                override fun onDataChange(userSnapshot: DataSnapshot) {
+//                                    val userName = userSnapshot.child("name").value.toString()
+//                                    val userProfileImageUri =
+//                                        userSnapshot.child("profileImageUri").value.toString()
+//                                    val user = User(userName, userProfileImageUri, userIdToDisplay)
+//
+//                                    usersList.add(user)
+//                                    usersAdapter.setUsers(usersList)
+//                                }
+//
+//                                override fun onCancelled(databaseError: DatabaseError) {
+//                                    Log.e(
+//                                        "ChatsFragment",
+//                                        "Failed to retrieve user data: $databaseError"
+//                                    )
+//                                }
+//                            })
+//                        }
+//                    }
+//                }
+//            }
+//
+//            override fun onCancelled(databaseError: DatabaseError) {
+//                Log.e("ChatsFragment", "Failed to retrieve chats: $databaseError")
+//            }
+//        })
+//    }
+
