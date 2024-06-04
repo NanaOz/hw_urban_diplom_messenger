@@ -29,6 +29,8 @@
     <string name="send_an_sms">Send an SMS</string>
     <string name="the_identifier">The identifier:</string>
     <string name="apply">Apply</string>
+    <string name="cancel">Cancel</string>
+    <string name="close">Close</string>
 
     <string-array name="country_codes">
         <item>+7</item>

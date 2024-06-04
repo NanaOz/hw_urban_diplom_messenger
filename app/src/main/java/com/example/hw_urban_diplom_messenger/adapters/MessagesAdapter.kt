@@ -3,11 +3,13 @@ package com.example.hw_urban_diplom_messenger.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.hw_urban_diplom_messenger.R
 import com.example.hw_urban_diplom_messenger.chats.Message
 import com.google.firebase.auth.FirebaseAuth
+import com.squareup.picasso.Picasso
 import java.util.Objects
 
 class MessagesAdapter(private val messages: MutableList<Message>, private val messageLongClickListener: MessageLongClickListener) :
@@ -20,6 +22,13 @@ class MessagesAdapter(private val messages: MutableList<Message>, private val me
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
         val message = messages[position]
         holder.messageTv.text = message.text
+
+        if (message.imageUri != null) {
+            holder.imageView.visibility = View.VISIBLE
+            Picasso.get().load(message.imageUri).into(holder.imageView)
+        } else {
+            holder.imageView.visibility = View.GONE
+        }
     }
 
     override fun getItemCount(): Int {
@@ -45,9 +54,11 @@ class MessagesAdapter(private val messages: MutableList<Message>, private val me
 
     class MessageViewHolder(itemView: View, private val messages: List<Message>, private val messageLongClickListener: MessageLongClickListener) : RecyclerView.ViewHolder(itemView) {
         var messageTv: TextView
+        var imageView: ImageView
 
         init {
             messageTv = itemView.findViewById(R.id.messageTextView)
+            imageView = itemView.findViewById(R.id.messageImageView)
             itemView.setOnLongClickListener {
                 messageLongClickListener.onMessageLongClick(messages[adapterPosition])
                 true

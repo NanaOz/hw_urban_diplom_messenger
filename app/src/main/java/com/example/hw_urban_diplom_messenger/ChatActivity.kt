@@ -1,13 +1,16 @@
 package com.example.hw_urban_diplom_messenger
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
@@ -28,6 +31,7 @@ import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -39,6 +43,10 @@ class ChatActivity : AppCompatActivity() {
     private lateinit var binding: ActivityChatBinding
     private lateinit var messagesAdapter: MessagesAdapter
     private lateinit var chatId: String
+    private var REQUEST_SELECT_FILE = 1
+
+    private var selectedFileUri: Uri? = null
+    private var isFileSelected: Boolean = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,13 +59,12 @@ class ChatActivity : AppCompatActivity() {
         val profileImageUri = intent.getStringExtra("userProfileImageUri")
         chatId = intent.getStringExtra("chatId") ?: ""
 
-//        messagesAdapter = MessagesAdapter(mutableListOf())
-
-        messagesAdapter = MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
-            override fun onMessageLongClick(message: Message) {
-                showDeleteConfirmationDialog(message)
-            }
-        })
+        messagesAdapter =
+            MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
+                override fun onMessageLongClick(message: Message) {
+                    showDeleteConfirmationDialog(message)
+                }
+            })
 
         binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.messagesRecyclerView.adapter = messagesAdapter
@@ -65,12 +72,23 @@ class ChatActivity : AppCompatActivity() {
         loadMessages()
 
         binding.sendMessageImageButton.setOnClickListener {
-            val message = binding.messageEditText.text.toString()
-            if (message.isNotEmpty()) {
-                sendMessage(message)
-                binding.messageEditText.text.clear()
+
+            if (isFileSelected) {
+                selectedFileUri?.let {
+                    sendMessageWithAttachment(it, binding.messageEditText.text.toString())
+                    binding.attachFileImageButton.setImageResource(R.drawable.attach_file)
+                    selectedFileUri = null
+                    isFileSelected = false
+                    binding.messageEditText.text.clear()
+                }
             } else {
-                Toast.makeText(this, "Message field cannot be empty", Toast.LENGTH_SHORT).show()
+                val message = binding.messageEditText.text.toString()
+                if (message.isNotEmpty()) {
+                    sendMessage(message)
+                    binding.messageEditText.text.clear()
+                } else {
+                    Toast.makeText(this, "Message field cannot be empty", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
@@ -93,7 +111,55 @@ class ChatActivity : AppCompatActivity() {
                 }
 
                 override fun onPrepareLoad(placeHolderDrawable: Drawable?) {}
-        })
+            })
+
+        binding.attachFileImageButton.setOnClickListener {
+            openGalleryForFile()
+        }
+    }
+
+    private fun openGalleryForFile() {
+        val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+        startActivityForResult(intent, REQUEST_SELECT_FILE)
+    }
+
+    private fun sendMessageWithAttachment(fileUri: Uri, message: String) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val ownerId = currentUser?.uid
+
+        val fileName = "attachments/${System.currentTimeMillis()}_${fileUri.lastPathSegment}"
+        val fileRef = storageRef.child(fileName)
+
+        val uploadTask = fileRef.putFile(fileUri)
+
+        uploadTask.addOnSuccessListener { taskSnapshot ->
+            fileRef.downloadUrl.addOnSuccessListener { uri ->
+                val imageUrl = uri.toString()
+
+                val messageInfo = mapOf(
+                    "text" to if (message.isNotEmpty()) message else "",
+                    "fileUri" to imageUrl,
+                    "ownerId" to ownerId
+                )
+
+                FirebaseDatabase.getInstance().reference.child("Chats").child(chatId)
+                    .child("messages").push().setValue(messageInfo)
+            }.addOnFailureListener { exception ->
+                Log.e("getImageUrl", "Error getting image URL: $exception")
+            }
+        }.addOnFailureListener { exception ->
+            Log.e("uploadFileToFirebase", "Error uploading file: $exception")
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_SELECT_FILE && resultCode == Activity.RESULT_OK && data != null && data.data != null) {
+            selectedFileUri = data.data
+            isFileSelected = true
+            binding.attachFileImageButton.setImageResource(R.drawable.attach_yes)
+        }
     }
 
     private fun showDeleteConfirmationDialog(message: Message) {
@@ -112,7 +178,6 @@ class ChatActivity : AppCompatActivity() {
             .child("messages").child(message.id)
             .removeValue()
     }
-
 
     private fun sendMessage(message: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
@@ -139,7 +204,9 @@ class ChatActivity : AppCompatActivity() {
                         val messageId = messageSnapshot.key
                         val ownerId = messageSnapshot.child("ownerId").value.toString()
                         val text = messageSnapshot.child("text").value.toString()
-                        val message = messageId?.let { Message(it, ownerId, text) }
+                        val imageUri = messageSnapshot.child("fileUri").value?.toString()
+
+                        val message = messageId?.let { Message(it, ownerId, text, imageUri) }
                         if (message != null) {
                             messages.add(message)
                         }
@@ -177,10 +244,12 @@ class ChatActivity : AppCompatActivity() {
             R.id.action_logout -> {
                 FirebaseAuth.getInstance().signOut()
                 val intent = Intent(this, LoginActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                intent.flags =
+                    Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
                 startActivity(intent)
                 finish()
-                val sharedPreferences = getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
+                val sharedPreferences =
+                    getSharedPreferences("UserPrefs", Context.MODE_PRIVATE)
                 sharedPreferences.edit().putBoolean("isLoggedIn", false).apply()
             }
 

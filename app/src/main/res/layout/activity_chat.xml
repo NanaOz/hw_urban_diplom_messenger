@@ -57,7 +57,7 @@
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
     <ImageButton
-        android:id="@+id/attachFileButton"
+        android:id="@+id/attachFileImageButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="10dp"
@@ -76,7 +76,7 @@
         android:padding="13dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sendMessageImageButton"
-        app:layout_constraintStart_toEndOf="@+id/attachFileButton" />
+        app:layout_constraintStart_toEndOf="@+id/attachFileImageButton" />
 
     <ImageButton
         android:id="@+id/sendMessageImageButton"
