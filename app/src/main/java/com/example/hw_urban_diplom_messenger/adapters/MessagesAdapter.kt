@@ -16,7 +16,7 @@ class MessagesAdapter(private val messages: MutableList<Message>, private val me
     RecyclerView.Adapter<MessagesAdapter.MessageViewHolder>() {
 
     interface MessageLongClickListener {
-        fun onMessageLongClick(message: Message)
+        fun onMessageLongClick(message: Message, hasImage: Boolean)
     }
 
     override fun onBindViewHolder(holder: MessageViewHolder, position: Int) {
@@ -60,7 +60,8 @@ class MessagesAdapter(private val messages: MutableList<Message>, private val me
             messageTv = itemView.findViewById(R.id.messageTextView)
             imageView = itemView.findViewById(R.id.messageImageView)
             itemView.setOnLongClickListener {
-                messageLongClickListener.onMessageLongClick(messages[adapterPosition])
+                val hasImage = !messages[adapterPosition].imageUri.isNullOrEmpty()
+                messageLongClickListener.onMessageLongClick(messages[adapterPosition], hasImage)
                 true
             }
         }

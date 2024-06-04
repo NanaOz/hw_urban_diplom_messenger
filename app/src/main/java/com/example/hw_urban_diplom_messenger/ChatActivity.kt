@@ -12,8 +12,11 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Log
+import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Button
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.core.content.ContextCompat.startActivity
@@ -59,12 +62,28 @@ class ChatActivity : AppCompatActivity() {
         val profileImageUri = intent.getStringExtra("userProfileImageUri")
         chatId = intent.getStringExtra("chatId") ?: ""
 
-        messagesAdapter =
-            MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
-                override fun onMessageLongClick(message: Message) {
+        messagesAdapter = MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
+            override fun onMessageLongClick(message: Message, hasImage: Boolean) {
+                if (hasImage) {
+                    val builder = AlertDialog.Builder(this@ChatActivity)
+                    builder.setTitle("Options")
+                    val options = arrayOf("View Image", "Delete Message")
+                    builder.setItems(options) { _, which ->
+                        when (which) {
+                            0 -> {
+                                message.imageUri?.let { showImageDialog(it) }
+                            }
+                            1 -> {
+                                deleteMessage(message)
+                            }
+                        }
+                    }
+                    builder.show()
+                } else {
                     showDeleteConfirmationDialog(message)
                 }
-            })
+            }
+        })
 
         binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.messagesRecyclerView.adapter = messagesAdapter
@@ -115,6 +134,22 @@ class ChatActivity : AppCompatActivity() {
 
         binding.attachFileImageButton.setOnClickListener {
             openGalleryForFile()
+        }
+    }
+
+    private fun showImageDialog(imageUri: String) {
+        val dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_photo, null)
+        val flagImageView = dialogView.findViewById<ImageView>(R.id.flagImageView)
+        val applyButton = dialogView.findViewById<Button>(R.id.applyButton)
+
+        Picasso.get().load(imageUri).into(flagImageView)
+
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogView)
+            .show()
+
+        applyButton.setOnClickListener {
+            dialog.dismiss()
         }
     }
 
