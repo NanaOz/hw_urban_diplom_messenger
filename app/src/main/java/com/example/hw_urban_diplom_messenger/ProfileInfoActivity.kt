@@ -34,7 +34,15 @@ class ProfileInfoActivity : AppCompatActivity() {
                 val address = dataSnapshot.child("address").getValue(String::class.java)
                 val age = dataSnapshot.child("age").getValue(String::class.java)
                 val profileImageUri = dataSnapshot.child("profileImageUri").getValue(String::class.java)
+                val email = dataSnapshot.child("email").getValue(String::class.java)
                 phoneNumber = dataSnapshot.child("phoneNumber").getValue(String::class.java)
+
+                val maskedEmail = email?.let {
+                    val atIndex = it.indexOf('@')
+                    val maskedChars = it.substring(0, atIndex - 2).replace("[a-zA-Z0-9]".toRegex(), "*")
+                    val lastChars = it.substring(maxOf(atIndex - 2, 0))
+                    "$maskedChars$lastChars"
+                }
 
                 binding.usernameTextView.text = name
                 binding.nameTextView.text = name
@@ -43,6 +51,7 @@ class ProfileInfoActivity : AppCompatActivity() {
                 binding.adressTextView.text = address
                 binding.ageTextView.text = age
                 binding.phoneTextView.text = phoneNumber
+                binding.emailTextView.text = maskedEmail
 
                 Picasso.get()
                     .load(profileImageUri)

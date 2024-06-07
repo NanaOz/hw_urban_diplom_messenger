@@ -106,9 +106,10 @@ class MyProfileActivity : AppCompatActivity() {
         val user = FirebaseAuth.getInstance().currentUser
         val email = user?.email
         val maskedEmail = email?.let {
-            val maskedChars = it.substring(0, it.length - 6).replace("[a-zA-Z0-9]".toRegex(), "*")
-            val lastTwoChars = it.substring(it.length - 6)
-            "$maskedChars$lastTwoChars"
+            val atIndex = it.indexOf('@')
+            val maskedChars = it.substring(0, atIndex - 2).replace("[a-zA-Z0-9]".toRegex(), "*")
+            val lastChars = it.substring(maxOf(atIndex - 2, 0))
+            "$maskedChars$lastChars"
         }
 
         binding.emailTextView.text = maskedEmail
