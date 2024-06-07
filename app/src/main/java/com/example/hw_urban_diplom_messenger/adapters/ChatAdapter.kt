@@ -22,7 +22,8 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.squareup.picasso.Picasso
 
-class ChatAdapter(private var users: MutableList<User> = mutableListOf()) : RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
+class ChatAdapter(private var users: MutableList<User> = mutableListOf()) :
+    RecyclerView.Adapter<ChatAdapter.ChatViewHolder>() {
     private var onItemClickListener: ((User) -> Unit)? = null
 
     fun setOnItemClickListener(listener: (User) -> Unit) {
@@ -60,13 +61,11 @@ class ChatAdapter(private var users: MutableList<User> = mutableListOf()) : Recy
 
         private val userImageView: ImageView = itemView.findViewById(R.id.userChatImageView)
         private val usernameTextView: TextView = itemView.findViewById(R.id.usernameChatTextView)
-        private val lastMessageChatTextView: TextView =
-            itemView.findViewById(R.id.lastMessageChatTextView)
+        private val lastMessageChatTextView: TextView = itemView.findViewById(R.id.lastMessageChatTextView)
 
         fun bind(user: User) {
             usernameTextView.text = user.name
             lastMessageChatTextView.text = user.lastMessage
-
             if (user.profileImageUri.isNotEmpty()) {
                 Picasso.get().load(user.profileImageUri).placeholder(R.drawable.person)
                     .error(R.drawable.person).into(userImageView)

@@ -18,28 +18,25 @@ import android.view.MenuItem
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.core.app.ActivityCompat.finishAffinity
-import androidx.core.content.ContextCompat.startActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.hw_urban_diplom_messenger.adapters.ChatAdapter
 import com.example.hw_urban_diplom_messenger.adapters.MessagesAdapter
-import com.example.hw_urban_diplom_messenger.chats.Chat
 import com.example.hw_urban_diplom_messenger.chats.Message
 import com.example.hw_urban_diplom_messenger.databinding.ActivityChatBinding
-import com.example.hw_urban_diplom_messenger.databinding.FragmentChatsBinding
-import com.google.android.play.integrity.internal.al
+import com.example.hw_urban_diplom_messenger.push.ApiService
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
+import okhttp3.ResponseBody
+import retrofit2.Retrofit
 import java.lang.Exception
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Objects
+import retrofit2.Call
+import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.Callback
+import retrofit2.Response
 
 class ChatActivity : AppCompatActivity() {
 
@@ -224,9 +221,59 @@ class ChatActivity : AppCompatActivity() {
             )
             FirebaseDatabase.getInstance().reference.child("Chats").child(chatId)
                 .child("messages").push().setValue(messageInfo)
+
+            pushNotification(message)
+
         } else {
             Log.e("sendMessage", "Error: currentUser or uid is null")
         }
+    }
+
+    // Отправка пуш уведомления
+    private fun pushNotification(message: String) {
+        val recipientUserRef = FirebaseDatabase.getInstance().reference.child("Users").child(chatId)
+        recipientUserRef.addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val targetDeviceToken = snapshot.child("deviceToken").value?.toString()
+
+                if (!targetDeviceToken.isNullOrEmpty()) {
+                    val notification = mapOf(
+                        "to" to targetDeviceToken,
+                        "notification" to mapOf(
+                            "title" to "Новое сообщение",
+                            "body" to message
+                        )
+                    )
+
+                    val retrofit = Retrofit.Builder()
+                        .baseUrl("https://fcm.googleapis.com/")
+                        .addConverterFactory(GsonConverterFactory.create())
+                        .build()
+
+                    val apiService = retrofit.create(ApiService::class.java)
+
+                    // Отправка запроса через Retrofit подставить YOUR_SERVER_KEY!!!!!
+                    apiService.sendNotification("Bearer YOUR_SERVER_KEY", notification).enqueue(object : Callback<ResponseBody> {
+                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                            if (response.isSuccessful) {
+                                Log.d("sendMessage", "Notification sent successfully")
+                            } else {
+                                Log.e("sendMessage", "Failed to send notification: ${response.errorBody()?.string()}")
+                            }
+                        }
+
+                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                            Log.e("sendMessage", "Error sending notification: ${t.message}")
+                        }
+                    })} else {
+                    Log.e("sendMessage", "Recipient device token not found")
+                }
+            }
+
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("sendMessage", "Error sending notification: ${error.message}")
+            }
+        })
     }
 
     private fun loadMessages() {

@@ -22,9 +22,9 @@
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:layout_gravity="center"
-        android:layout_marginLeft="10dp">
+        android:layout_marginLeft="10dp"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/usernameChatTextView"
@@ -34,25 +34,11 @@
             android:textSize="16sp"
             android:textStyle="bold" />
 
-        <LinearLayout
+        <TextView
+            android:id="@+id/lastMessageChatTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="5dp"
-            android:gravity="center">
+            android:text="последнее сообщение" />
 
-            <ImageView
-                android:id="@+id/newImageView"
-                android:layout_width="15dp"
-                android:layout_height="15dp"
-                android:src="@drawable/circle"/>
-
-            <TextView
-                android:id="@+id/lastMessageChatTextView"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="5dp"
-                android:text="последнее сообщение" />
-        </LinearLayout>
     </LinearLayout>
 </LinearLayout>
