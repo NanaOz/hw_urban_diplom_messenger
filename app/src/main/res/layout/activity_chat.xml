@@ -32,13 +32,11 @@
                 android:layout_gravity="start"/>
         </com.google.android.material.card.MaterialCardView>
 
-
-
         <TextView
             android:id="@+id/titleTextView"
             android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:text="Name"
+            android:text="@string/name"
             android:textSize="26sp"
             android:textStyle="bold"
             android:layout_marginLeft="26dp"
@@ -72,7 +70,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="10dp"
         android:background="@drawable/message_et_shape"
-        android:hint="Type your message..."
+        android:hint="@string/type_your_message"
         android:padding="13dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sendMessageImageButton"
