@@ -7,10 +7,15 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
 import com.example.hw_urban_diplom_messenger.adapters.PagerAdapter
 import com.example.hw_urban_diplom_messenger.databinding.ActivityMessengerBinding
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.database.ValueEventListener
 
 class MessengerActivity : AppCompatActivity() {
 
@@ -22,6 +27,28 @@ class MessengerActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+        val user = FirebaseAuth.getInstance().currentUser
+        if (user != null) {
+            val database = FirebaseDatabase.getInstance()
+            val userId = FirebaseAuth.getInstance().currentUser?.uid
+            val userRef = userId?.let { database.getReference("Users").child(it) }
+            userId?.let {
+                userRef?.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val name = dataSnapshot.child("name").getValue(String::class.java)
+                        supportActionBar?.title = name
+                    }
+
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        Toast.makeText(
+                            this@MessengerActivity,
+                            "error getting information",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                })
+            }
+        }
 
         pagerAdapter = PagerAdapter(supportFragmentManager, lifecycle)
         binding.viewPager.adapter = pagerAdapter
