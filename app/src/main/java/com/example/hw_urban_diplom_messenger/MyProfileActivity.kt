@@ -2,10 +2,8 @@ package com.example.hw_urban_diplom_messenger
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.content.Context
 import android.content.Intent
-import android.content.SharedPreferences
-import android.net.Uri
+import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,20 +16,27 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Spinner
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.hw_urban_diplom_messenger.databinding.ActivityMyProfileBinding
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
+import android.Manifest
+import android.graphics.Bitmap
+import android.net.Uri
+import java.io.ByteArrayOutputStream
 
 class MyProfileActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMyProfileBinding
     val REQUEST_CODE_SELECT_IMAGE = 1
+    val REQUEST_CODE_SELECT_PHOTO = 2
+    val REQUEST_CAMERA_PERMISSION = 101
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -134,8 +139,36 @@ class MyProfileActivity : AppCompatActivity() {
         }
 
         binding.changeProfileImage.setOnClickListener {
-            val intent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
-            startActivityForResult(intent, REQUEST_CODE_SELECT_IMAGE)
+            val options = arrayOf("Choose from Gallery", "Take Photo")
+            AlertDialog.Builder(this)
+                .setTitle("Choose an option")
+                .setItems(options) { dialog, which ->
+                    when (which) {
+                        0 -> {
+                            val galleryIntent = Intent(
+                                Intent.ACTION_PICK,
+                                MediaStore.Images.Media.EXTERNAL_CONTENT_URI
+                            )
+                            startActivityForResult(galleryIntent, REQUEST_CODE_SELECT_IMAGE)
+                        }
+
+                        1 -> {
+                            if (ContextCompat.checkSelfPermission(
+                                    this,
+                                    Manifest.permission.CAMERA
+                                ) != PackageManager.PERMISSION_GRANTED
+                            ) {
+                                ActivityCompat.requestPermissions(
+                                    this,
+                                    arrayOf(Manifest.permission.CAMERA),
+                                    REQUEST_CAMERA_PERMISSION
+                                )
+                            } else {
+                                dispatchTakePictureIntent()
+                            }
+                        }
+                    }
+                }.show()
         }
 
         binding.addPhoneImageView.setOnClickListener {
@@ -154,7 +187,12 @@ class MyProfileActivity : AppCompatActivity() {
             codeSpinner.adapter = adapter
 
             codeSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-                override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                override fun onItemSelected(
+                    parent: AdapterView<*>?,
+                    view: View?,
+                    position: Int,
+                    id: Long
+                ) {
                     val flagsArray = resources.obtainTypedArray(R.array.country_flags)
                     flagImageView.setImageResource(flagsArray.getResourceId(position, -1))
                     flagsArray.recycle()
@@ -179,6 +217,11 @@ class MyProfileActivity : AppCompatActivity() {
 
     }
 
+    private fun dispatchTakePictureIntent() {
+        val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        startActivityForResult(takePictureIntent, REQUEST_CODE_SELECT_PHOTO)
+    }
+
     private fun savePhoneNumberToFirebase(countryCode: String, phoneNumber: String) {
         val database = FirebaseDatabase.getInstance()
         val userId = FirebaseAuth.getInstance().currentUser?.uid
@@ -187,12 +230,82 @@ class MyProfileActivity : AppCompatActivity() {
         userRef?.child("phoneNumber")?.setValue(phoneWithCode)
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        when (requestCode) {
+            REQUEST_CAMERA_PERMISSION -> {
+                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    dispatchTakePictureIntent()
+                } else {
+                    Toast.makeText(
+                        this,
+                        "Camera permission is required to take a photo",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+
+            else -> super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        }
+    }
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
-        if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == Activity.RESULT_OK) {
-            val imageUri = data?.data
+        if (requestCode == REQUEST_CODE_SELECT_PHOTO && resultCode == Activity.RESULT_OK) {
+            val imageBitmap = data?.extras?.get("data") as Bitmap?
 
+            if (imageBitmap != null) {
+                binding.myProfileImage.setImageBitmap(imageBitmap)
+
+                val bytes = ByteArrayOutputStream()
+                imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
+                val path =
+                    MediaStore.Images.Media.insertImage(contentResolver, imageBitmap, "Title", null)
+                val imageUri = Uri.parse(path)
+
+                val storageRef = FirebaseStorage.getInstance().reference
+                val imagesRef =
+                    storageRef.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}/profile.jpg")
+
+                val uploadTask = imagesRef.putFile(imageUri)
+
+                uploadTask.continueWithTask { task ->
+                    if (!task.isSuccessful) {
+                        task.exception?.let {
+                            throw it
+                        }
+                    }
+                    imagesRef.downloadUrl
+                }.addOnCompleteListener { task ->
+                    if (task.isSuccessful) {
+                        val downloadUri = task.result
+                        val database = FirebaseDatabase.getInstance()
+                        val userId = FirebaseAuth.getInstance().currentUser?.uid
+                        val userRef =
+                            userId?.let { database.getReference("Users").child(it) }
+                        userRef?.child("profileImageUri")?.setValue(downloadUri.toString())
+
+                        Picasso.get()
+                            .load(downloadUri)
+                            .placeholder(R.drawable.myprofile)
+                            .error(R.drawable.person_edit)
+                            .into(binding.myProfileImage)
+                    } else {
+                        Toast.makeText(this, "image upload error", Toast.LENGTH_LONG).show()
+                    }
+
+
+                }
+            } else {
+                Toast.makeText(this, "Failed to capture image", Toast.LENGTH_SHORT).show()
+            }
+        } else if (requestCode == REQUEST_CODE_SELECT_IMAGE && resultCode == Activity.RESULT_OK) {
+            val imageUri = data?.data
+            Log.d("MyApp", "Image URI: " + imageUri.toString())
             val storageRef = FirebaseStorage.getInstance().reference
             val imagesRef =
                 storageRef.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}/profile.jpg")
@@ -224,6 +337,7 @@ class MyProfileActivity : AppCompatActivity() {
                     Toast.makeText(this, "image upload error", Toast.LENGTH_LONG).show()
                 }
             }
+
         }
     }
 
