@@ -6,8 +6,6 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import com.example.hw_urban_diplom_messenger.databinding.ActivityProfileInfoBinding
-import com.example.hw_urban_diplom_messenger.users.User
-import com.google.android.play.integrity.internal.al
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase

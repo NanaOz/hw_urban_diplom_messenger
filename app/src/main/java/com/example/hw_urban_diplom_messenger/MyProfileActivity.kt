@@ -44,9 +44,6 @@ class MyProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         val storageRef = FirebaseStorage.getInstance().reference
-        val imagesRef =
-            storageRef.child("profileImages/${FirebaseAuth.getInstance().currentUser?.uid}/profile.jpg")
-
         val database = FirebaseDatabase.getInstance()
         val userId = FirebaseAuth.getInstance().currentUser?.uid
         val userRef = userId?.let { database.getReference("Users").child(it) }

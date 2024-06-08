@@ -23,9 +23,7 @@ import com.google.firebase.database.ValueEventListener
 class ChatsFragment : Fragment() {
 
     private lateinit var binding: FragmentChatsBinding
-
-    //    private lateinit var usersAdapter: UserAdapter
-    private lateinit var usersAdapter: ChatAdapter
+    private lateinit var chatAdapter: ChatAdapter
     private val usersList: MutableList<User> = mutableListOf()
     private val chatsList: MutableList<Chat> = mutableListOf()
     private val currentUserUid = FirebaseAuth.getInstance().currentUser?.uid
@@ -37,8 +35,7 @@ class ChatsFragment : Fragment() {
         binding = FragmentChatsBinding.inflate(inflater, container, false)
         val view = binding.root
 
-//        usersAdapter = UserAdapter(usersList)
-        usersAdapter = ChatAdapter(usersList)
+        chatAdapter = ChatAdapter(usersList)
         binding.chatsRecyclerView.layoutManager = LinearLayoutManager(context)
         binding.chatsRecyclerView.addItemDecoration(
             DividerItemDecoration(
@@ -46,11 +43,11 @@ class ChatsFragment : Fragment() {
                 DividerItemDecoration.VERTICAL
             )
         )
-        binding.chatsRecyclerView.adapter = usersAdapter
+        binding.chatsRecyclerView.adapter = chatAdapter
 
         retrieveChatsFromFirebase()
 
-        usersAdapter.setOnItemClickListener { user ->
+        chatAdapter.setOnItemClickListener { user ->
             val currentUser = FirebaseAuth.getInstance().currentUser
             val userId = currentUser?.uid
             if (userId != null) {
@@ -106,7 +103,7 @@ class ChatsFragment : Fragment() {
                                                 val lastMessageSnapshot = messagesSnapshot.children.first()
                                                 val lastMessageText = lastMessageSnapshot.child("text").value.toString()
 
-                                                // Truncate message to 20 characters and add ellipsis
+
                                                 val limitedLastMessage = if (lastMessageText.length > 20) {
                                                     "${lastMessageText.substring(0, 25)}..."
                                                 } else {
@@ -116,7 +113,7 @@ class ChatsFragment : Fragment() {
                                                 user.lastMessage = limitedLastMessage
 
                                                 usersList.add(user)
-                                                usersAdapter.setUsers(usersList)
+                                                chatAdapter.setUsers(usersList)
                                             }
                                         }
 

@@ -10,7 +10,6 @@ import com.example.hw_urban_diplom_messenger.R
 import com.example.hw_urban_diplom_messenger.chats.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.squareup.picasso.Picasso
-import java.util.Objects
 
 class MessagesAdapter(private val messages: MutableList<Message>, private val messageLongClickListener: MessageLongClickListener) :
     RecyclerView.Adapter<MessagesAdapter.MessageViewHolder>() {

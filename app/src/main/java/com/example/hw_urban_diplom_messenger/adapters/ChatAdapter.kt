@@ -1,25 +1,14 @@
 package com.example.hw_urban_diplom_messenger.adapters
 
-import android.annotation.SuppressLint
-import android.content.Intent
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
-import com.example.hw_urban_diplom_messenger.ChatActivity
 import com.example.hw_urban_diplom_messenger.R
-import com.example.hw_urban_diplom_messenger.chats.Chat
-import com.example.hw_urban_diplom_messenger.fragments.ChatsFragment
 import com.example.hw_urban_diplom_messenger.users.User
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.squareup.picasso.Picasso
 
 class ChatAdapter(private var users: MutableList<User> = mutableListOf()) :

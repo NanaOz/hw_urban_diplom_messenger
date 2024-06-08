@@ -54,6 +54,8 @@ class ChatActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         setSupportActionBar(binding.toolbar)
+        supportActionBar?.setDisplayHomeAsUpEnabled(true)
+        supportActionBar?.setDisplayShowHomeEnabled(true)
 
         val userName = intent.getStringExtra("userName")
         val profileImageUri = intent.getStringExtra("userProfileImageUri")
@@ -231,49 +233,59 @@ class ChatActivity : AppCompatActivity() {
 
     // Отправка пуш уведомления
     private fun pushNotification(message: String) {
-        val recipientUserRef = FirebaseDatabase.getInstance().reference.child("Users").child(chatId)
-        recipientUserRef.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val targetDeviceToken = snapshot.child("deviceToken").value?.toString()
+        val currentUser = FirebaseAuth.getInstance().currentUser
 
-                if (!targetDeviceToken.isNullOrEmpty()) {
-                    val notification = mapOf(
-                        "to" to targetDeviceToken,
-                        "notification" to mapOf(
-                            "title" to "Новое сообщение",
-                            "body" to message
+        if (currentUser != null) {
+            val senderUserId = currentUser.uid
+//            val senderToken = FirebaseInstanceId.getInstance().getToken()
+
+            val recipientUserRef = FirebaseDatabase.getInstance().reference.child("Users").child(chatId)
+            recipientUserRef.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val recipientUserId = snapshot.child("userId").value?.toString()
+                    val targetDeviceToken = snapshot.child("deviceToken").value?.toString()
+
+                    if (!targetDeviceToken.isNullOrEmpty() && !recipientUserId.isNullOrEmpty()) {
+                        val notification = mapOf(
+                            "to" to targetDeviceToken,
+                            "notification" to mapOf(
+                                "title" to "New Message",
+                                "body" to message
+                            )
                         )
-                    )
 
-                    val retrofit = Retrofit.Builder()
-                        .baseUrl("https://fcm.googleapis.com/")
-                        .addConverterFactory(GsonConverterFactory.create())
-                        .build()
+                        val retrofit = Retrofit.Builder()
+                            .baseUrl("https://fcm.googleapis.com/")
+                            .addConverterFactory(GsonConverterFactory.create())
+                            .build()
 
-                    val apiService = retrofit.create(ApiService::class.java)
+                        val apiService = retrofit.create(ApiService::class.java)
 
-                    // Отправка запроса через Retrofit подставить YOUR_SERVER_KEY!!!!!
-                    apiService.sendNotification("Bearer YOUR_SERVER_KEY", notification).enqueue(object : Callback<ResponseBody> {
-                        override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                            if (response.isSuccessful) {
-                                Log.d("sendMessage", "Notification sent successfully")
-                            } else {
-                                Log.e("sendMessage", "Failed to send notification: ${response.errorBody()?.string()}")
+                        apiService.sendNotification("Bearer $senderUserId", notification).enqueue(object : Callback<ResponseBody> {
+                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
+                                if (response.isSuccessful) {
+                                    Log.d("sendMessage", "Notification sent successfully")
+                                } else {
+                                    Log.e("sendMessage", "Failed to send notification: ${response.errorBody()?.string()}")
+                                }
                             }
-                        }
 
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                            Log.e("sendMessage", "Error sending notification: ${t.message}")
-                        }
-                    })} else {
-                    Log.e("sendMessage", "Recipient device token not found")
+                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                Log.e("sendMessage", "Error sending notification: ${t.message}")
+                            }
+                        })
+                    } else {
+                        Log.e("sendMessage", "Recipient device token or userId not found")
+                    }
                 }
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("sendMessage", "Error sending notification: ${error.message}")
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("sendMessage", "Error sending notification: ${error.message}")
+                }
+            })
+        } else {
+            Log.e("sendMessage", "Error: currentUser is null")
+        }
     }
 
     private fun loadMessages() {
@@ -281,7 +293,6 @@ class ChatActivity : AppCompatActivity() {
             .child(chatId).child("messages").addValueEventListener(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
                     val messages: MutableList<Message> = mutableListOf()
-                    val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
                     for (messageSnapshot in snapshot.children) {
                         val messageId = messageSnapshot.key
                         val ownerId = messageSnapshot.child("ownerId").value.toString()
@@ -315,6 +326,11 @@ class ChatActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            android.R.id.home -> {
+                onBackPressed()
+                return true
+            }
+
             R.id.action_profile -> {
                 val userId = intent.getStringExtra("userId")
                 val intent = Intent(this, ProfileInfoActivity::class.java)
