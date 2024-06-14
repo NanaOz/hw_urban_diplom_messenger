@@ -17,12 +17,19 @@ class SignupActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.signButton.setOnClickListener {
-            if ((binding.emailEditText.text.toString().isEmpty() ||
-                        binding.passwordEditText.text.toString().isEmpty())
+            if (binding.emailEditText.text.toString().isEmpty() ||
+                binding.passwordEditText.text.toString().isEmpty() ||
+                binding.passwordReplayEditText.text.toString().isEmpty()
             ) {
                 Toast.makeText(
                     applicationContext,
                     "Fields cannot be empty",
+                    Toast.LENGTH_LONG
+                ).show()
+            } else if (binding.passwordEditText.text.toString() != binding.passwordReplayEditText.text.toString()) {
+                Toast.makeText(
+                    applicationContext,
+                    "Passwords do not match",
                     Toast.LENGTH_LONG
                 ).show()
             } else {
@@ -43,6 +50,12 @@ class SignupActivity : AppCompatActivity() {
                                 MessengerActivity::class.java
                             )
                         )
+                    } else {
+                        Toast.makeText(
+                            applicationContext,
+                            "Email is already registered",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
                 }
             }
