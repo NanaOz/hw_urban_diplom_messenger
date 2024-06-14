@@ -87,6 +87,14 @@ class ChatActivity : AppCompatActivity() {
         binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.messagesRecyclerView.adapter = messagesAdapter
 
+        binding.messagesRecyclerView.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
+            if (bottom < oldBottom) {
+                binding.messagesRecyclerView.postDelayed({
+                    binding.messagesRecyclerView.scrollToPosition(messagesAdapter.itemCount - 1)
+                }, 100)
+            }
+        }
+
         loadMessages()
 
         binding.sendMessageImageButton.setOnClickListener {
