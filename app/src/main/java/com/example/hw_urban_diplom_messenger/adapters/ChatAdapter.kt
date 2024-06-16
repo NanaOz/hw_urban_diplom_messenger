@@ -42,17 +42,25 @@ class ChatAdapter(private var users: MutableList<User> = mutableListOf()) :
         newUsersList.addAll(newUsers)
         users.clear()
         users.addAll(newUsersList)
-        Log.d("UserAdapter", "New users set, count: ${users.size}")
+//        Log.d("ChatAdapter", "New users set, count: ${users.size}")
+//        Log.d("ChatAdapter", "newUsersList set, count: ${newUsersList.size}")
         notifyDataSetChanged()
+
+//        users.clear()
+//        users.addAll(newUsers)
+//        notifyDataSetChanged()
     }
 
     inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
-        private val userImageView: ImageView = itemView.findViewById(R.id.userChatImageView)
-        private val usernameTextView: TextView = itemView.findViewById(R.id.usernameChatTextView)
-        private val lastMessageChatTextView: TextView = itemView.findViewById(R.id.lastMessageChatTextView)
+        val userImageView: ImageView = itemView.findViewById(R.id.userChatImageView)
+        val usernameTextView: TextView = itemView.findViewById(R.id.usernameChatTextView)
+        val lastMessageChatTextView: TextView = itemView.findViewById(R.id.lastMessageChatTextView)
+        val statusImageView: ImageView = itemView.findViewById(R.id.statusImageView)
 
         fun bind(user: User) {
+
+            Log.d("ChatStatus", "Binding user: ${user.name}, isOnline: ${user.isOnline}")
             usernameTextView.text = user.name
             lastMessageChatTextView.text = user.lastMessage
             if (user.profileImageUri.isNotEmpty()) {
@@ -60,6 +68,13 @@ class ChatAdapter(private var users: MutableList<User> = mutableListOf()) :
                     .error(R.drawable.person).into(userImageView)
             } else {
                 userImageView.setImageResource(R.drawable.person)
+            }
+
+            if (user.isOnline) {
+                Log.d("ChatStatus", "статус: ${user.name}, isOnline: ${user.isOnline}")
+                statusImageView.visibility = View.VISIBLE
+            } else {
+                statusImageView.visibility = View.INVISIBLE
             }
         }
     }

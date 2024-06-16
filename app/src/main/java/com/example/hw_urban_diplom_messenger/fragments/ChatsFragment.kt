@@ -15,6 +15,7 @@ import com.example.hw_urban_diplom_messenger.chats.Chat
 import com.example.hw_urban_diplom_messenger.databinding.FragmentChatsBinding
 import com.example.hw_urban_diplom_messenger.users.User
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.ChildEventListener
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
@@ -96,6 +97,8 @@ class ChatsFragment : Fragment() {
                                     val userProfileImageUri = userSnapshot.child("profileImageUri").value.toString()
                                     val user = User(userName, userProfileImageUri, userIdToDisplay)
 
+                                    user.isOnline = userSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false
+
                                     val messagesRef = FirebaseDatabase.getInstance().getReference("Chats/$chatId/messages")
                                     messagesRef.limitToLast(1).addListenerForSingleValueEvent(object : ValueEventListener {
                                         override fun onDataChange(messagesSnapshot: DataSnapshot) {
@@ -114,6 +117,7 @@ class ChatsFragment : Fragment() {
 
                                                 usersList.add(user)
                                                 chatAdapter.setUsers(usersList)
+                                                Log.d("ChatAdapter", "Users retrieved from Firebase: ${user.name}")
                                             }
                                         }
 
@@ -138,3 +142,27 @@ class ChatsFragment : Fragment() {
         })
     }
 }
+//    private fun setupOnlineStatusListener() {
+//        val usersRef = FirebaseDatabase.getInstance().getReference("Users")
+//        val currentUserListener = object : ValueEventListener {
+//            override fun onDataChange(dataSnapshot: DataSnapshot) {
+//                val currentUser = usersList.find { it.userId == currentUserUid }
+//                currentUser?.let {
+//                    val isOnline = dataSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false
+//                    it.isOnline = isOnline
+//                    Log.e("ChatStatus", "Current user is online: $currentUser")
+//                    activity?.runOnUiThread {
+//                        chatAdapter.notifyDataSetChanged() // Обновляем RecyclerView, чтобы отразить изменения в основном потоке
+//                    }
+//                }
+//            }
+//
+//            override fun onCancelled(databaseError: DatabaseError) {
+//                Log.e("ChatsFragment", "Failed to retrieve current user data: $databaseError")
+//            }
+//        }
+//
+//        currentUserUid?.let {
+//            usersRef.child(it).addValueEventListener(currentUserListener)
+//        }
+//    }

@@ -21,10 +21,12 @@ class MessengerActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMessengerBinding
     private lateinit var pagerAdapter: PagerAdapter
+    private lateinit var firebaseDatabase: FirebaseDatabase // статус
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMessengerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        firebaseDatabase = FirebaseDatabase.getInstance() // статус
 
         setSupportActionBar(binding.toolbar)
         val user = FirebaseAuth.getInstance().currentUser
@@ -61,7 +63,21 @@ class MessengerActivity : AppCompatActivity() {
             }
         }.attach()
 
+        // Установка статуса онлайн в Firebase
+        FirebaseAuth.getInstance().currentUser?.let { it1 ->
+            firebaseDatabase.getReference("Users").child(it1.uid)
+                .child("isOnline").setValue(true)
+        }
 
+    }
+
+    override fun onPause() {
+        super.onPause()
+        // Установка статуса оффлайн в Firebase при сворачивании приложения
+        FirebaseAuth.getInstance().currentUser?.let {
+            firebaseDatabase.getReference("Users").child(it.uid)
+                .child("isOnline").setValue(false)
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

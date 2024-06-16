@@ -19,6 +19,13 @@
             android:src="@drawable/person" />
     </com.google.android.material.card.MaterialCardView>
 
+    <ImageView
+        android:id="@+id/statusImageView"
+        android:layout_width="15dp"
+        android:layout_height="15dp"
+        android:src="@drawable/circle"
+        android:layout_gravity="bottom"/>
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -33,6 +40,8 @@
             android:text="@string/usernsme"
             android:textSize="16sp"
             android:textStyle="bold" />
+
+
 
         <TextView
             android:id="@+id/lastMessageChatTextView"
