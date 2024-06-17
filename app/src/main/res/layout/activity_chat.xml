@@ -72,6 +72,8 @@
         android:background="@drawable/message_et_shape"
         android:hint="@string/type_your_message"
         android:padding="13dp"
+        android:textColorHint="@color/gray"
+        android:textColor="@color/black"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/sendMessageImageButton"
         app:layout_constraintStart_toEndOf="@+id/attachFileImageButton" />
