@@ -4,12 +4,10 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -17,11 +15,10 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
-import androidx.core.app.ActivityCompat
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.hw_urban_diplom_messenger.adapters.MessagesAdapter
 import com.example.hw_urban_diplom_messenger.chats.Message
@@ -29,30 +26,16 @@ import com.example.hw_urban_diplom_messenger.databinding.ActivityChatBinding
 import com.example.hw_urban_diplom_messenger.push.ApiService
 import com.example.hw_urban_diplom_messenger.push.NotificationBody
 import com.example.hw_urban_diplom_messenger.push.SendMessageDto
-import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
-import com.google.firebase.messaging.FirebaseMessaging
-import com.google.firebase.messaging.messaging
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
-import okhttp3.ResponseBody
 import retrofit2.Retrofit
 import java.lang.Exception
-import retrofit2.Call
 import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Callback
-import retrofit2.Response
-import com.google.firebase.ktx.Firebase
-import com.google.firebase.messaging.ktx.messaging
-import android.Manifest
-import androidx.core.app.ActivityCompat.finishAffinity
-import androidx.core.content.ContextCompat.startActivity
-import com.example.hw_urban_diplom_messenger.fragments.ChatsFragment
-import com.google.firebase.database.ktx.database
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -168,6 +151,8 @@ class ChatActivity : AppCompatActivity() {
         binding.attachFileImageButton.setOnClickListener {
             openGalleryForFile()
         }
+
+
     }
 
     private fun showImageDialog(imageUri: String) {
@@ -260,6 +245,7 @@ class ChatActivity : AppCompatActivity() {
     private fun sendMessage(message: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val ownerId = currentUser?.uid
+
         if (ownerId != null) {
             val messageInfo = mapOf(
                 "text" to message,
@@ -333,7 +319,9 @@ class ChatActivity : AppCompatActivity() {
                         val text = messageSnapshot.child("text").value.toString()
                         val imageUri = messageSnapshot.child("fileUri").value?.toString()
 
-                        val message = messageId?.let { Message(it, ownerId, text, imageUri) }
+                        val readMessage = messageSnapshot.child("read").getValue(Boolean::class.java) ?: false
+
+                        val message = messageId?.let { Message(it, ownerId, text, imageUri, readMessage) }
                         if (message != null) {
                             messages.add(message)
                         }
@@ -344,6 +332,16 @@ class ChatActivity : AppCompatActivity() {
 
                     binding.messagesRecyclerView.post {
                         binding.messagesRecyclerView.scrollToPosition(messagesAdapter.itemCount - 1)
+                    }
+
+                    val lastMessage = messages.lastOrNull()
+                    if (lastMessage != null) {
+                        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
+                        if (lastMessage.ownerId != currentUserId) {
+                            binding.statusMessageTextView.visibility = View.INVISIBLE
+                        } else {
+                            binding.statusMessageTextView.visibility = View.VISIBLE
+                        }
                     }
                 }
 

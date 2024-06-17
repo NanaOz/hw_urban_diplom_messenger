@@ -58,6 +58,7 @@ class MessagesAdapter(private val messages: MutableList<Message>, private val me
         init {
             messageTv = itemView.findViewById(R.id.messageTextView)
             imageView = itemView.findViewById(R.id.messageImageView)
+
             itemView.setOnLongClickListener {
                 val hasImage = !messages[adapterPosition].imageUri.isNullOrEmpty()
                 messageLongClickListener.onMessageLongClick(messages[adapterPosition], hasImage)
