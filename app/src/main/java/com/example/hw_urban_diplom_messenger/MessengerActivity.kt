@@ -76,21 +76,6 @@ class MessengerActivity : AppCompatActivity() {
 
     }
 
-
-//    private fun getToken(): String {
-//        var token = ""
-//        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
-//            if (!task.isSuccessful) {
-//                Log.w("pushNotification", "Fetching FCM registration token failed", task.exception)
-//                return@OnCompleteListener
-//            }
-//
-//            token = task.result
-//            Log.d("pushNotification", token)
-//        })
-//        return token
-//    }
-
     private fun addTokenToDatabase() {
         FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
             if (!task.isSuccessful) {
