@@ -4,10 +4,12 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -18,16 +20,23 @@ import android.view.MenuItem
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.hw_urban_diplom_messenger.adapters.MessagesAdapter
 import com.example.hw_urban_diplom_messenger.chats.Message
 import com.example.hw_urban_diplom_messenger.databinding.ActivityChatBinding
 import com.example.hw_urban_diplom_messenger.push.ApiService
+import com.example.hw_urban_diplom_messenger.push.NotificationBody
+import com.example.hw_urban_diplom_messenger.push.SendMessageDto
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.messaging.FirebaseMessaging
+import com.google.firebase.messaging.messaging
 import com.google.firebase.storage.FirebaseStorage
 import com.squareup.picasso.Picasso
 import okhttp3.ResponseBody
@@ -37,6 +46,16 @@ import retrofit2.Call
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.Callback
 import retrofit2.Response
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.messaging.ktx.messaging
+import android.Manifest
+import androidx.core.app.ActivityCompat.finishAffinity
+import androidx.core.content.ContextCompat.startActivity
+import com.google.firebase.database.ktx.database
+import com.google.firebase.messaging.RemoteMessage
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class ChatActivity : AppCompatActivity() {
 
@@ -61,32 +80,34 @@ class ChatActivity : AppCompatActivity() {
         val profileImageUri = intent.getStringExtra("userProfileImageUri")
         chatId = intent.getStringExtra("chatId") ?: ""
 
-        messagesAdapter = MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
-            override fun onMessageLongClick(message: Message, hasImage: Boolean) {
-                if (hasImage) {
-                    val builder = AlertDialog.Builder(this@ChatActivity)
-                    builder.setTitle("Options")
-                    val options = arrayOf("View Image", "Delete Message")
-                    builder.setItems(options) { _, which ->
-                        when (which) {
-                            0 -> {
-                                message.imageUri?.let { showImageDialog(it) }
-                            }
-                            1 -> {
-                                deleteMessage(message)
+        messagesAdapter =
+            MessagesAdapter(mutableListOf(), object : MessagesAdapter.MessageLongClickListener {
+                override fun onMessageLongClick(message: Message, hasImage: Boolean) {
+                    if (hasImage) {
+                        val builder = AlertDialog.Builder(this@ChatActivity)
+                        builder.setTitle("Options")
+                        val options = arrayOf("View Image", "Delete Message")
+                        builder.setItems(options) { _, which ->
+                            when (which) {
+                                0 -> {
+                                    message.imageUri?.let { showImageDialog(it) }
+                                }
+
+                                1 -> {
+                                    deleteMessage(message)
+                                }
                             }
                         }
+                        builder.show()
+                    } else {
+                        showDeleteConfirmationDialog(message)
                     }
-                    builder.show()
-                } else {
-                    showDeleteConfirmationDialog(message)
                 }
-            }
-        })
+            })
 
         val layoutManager = LinearLayoutManager(this)
 
-        layoutManager.stackFromEnd =true
+        layoutManager.stackFromEnd = true
         binding.messagesRecyclerView.layoutManager = layoutManager
 //        binding.messagesRecyclerView.layoutManager = LinearLayoutManager(this)
         binding.messagesRecyclerView.adapter = messagesAdapter
@@ -225,6 +246,16 @@ class ChatActivity : AppCompatActivity() {
             .removeValue()
     }
 
+    fun getInterlocutorId(currentUserId: String, chatId: String): String {
+        val userIds = chatId.split("-")
+        return if (userIds[0] == currentUserId) {
+            userIds[1]
+        } else {
+            userIds[0]
+        }
+    }
+
+
     private fun sendMessage(message: String) {
         val currentUser = FirebaseAuth.getInstance().currentUser
         val ownerId = currentUser?.uid
@@ -236,67 +267,51 @@ class ChatActivity : AppCompatActivity() {
             FirebaseDatabase.getInstance().reference.child("Chats").child(chatId)
                 .child("messages").push().setValue(messageInfo)
 
-            pushNotification(message)
+            val userId = getInterlocutorId(ownerId.toString(), chatId)
+            val userRef = userId?.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
+            userRef?.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    val token = dataSnapshot.child("token").getValue(String::class.java)
+                    Log.e("pushNotification", "token: $token")
+                    if (token != null) {
+                        pushNotification(message, token)
+                    }
+                }
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("pushNotification", "User data token could not be uploaded: $error")
+                }
+            })
+
 
         } else {
             Log.e("sendMessage", "Error: currentUser or uid is null")
         }
     }
 
-    // Отправка пуш уведомления
-    private fun pushNotification(message: String) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
+    private fun pushNotification(message: String, token: String) {
+        val notification = NotificationBody(
+            title = "Новое сообщение",
+            body = message
+        )
 
-        if (currentUser != null) {
-            val senderUserId = currentUser.uid
-//            val senderToken = FirebaseInstanceId.getInstance().getToken()
+        val sendMessageDto = SendMessageDto(
+            to = token,
+            notification = notification
+        )
 
-            val recipientUserRef = FirebaseDatabase.getInstance().reference.child("Users").child(chatId)
-            recipientUserRef.addListenerForSingleValueEvent(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    val recipientUserId = snapshot.child("userId").value?.toString()
-                    val targetDeviceToken = snapshot.child("deviceToken").value?.toString()
+        val apiService = Retrofit.Builder()
+            .baseUrl("https://fcm.googleapis.com/v1/projects/hwurbandiplommessenger/messages:send/")
+//            .baseUrl("https://fcm.googleapis.com/fcm/")
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+            .create(ApiService::class.java)
 
-                    if (!targetDeviceToken.isNullOrEmpty() && !recipientUserId.isNullOrEmpty()) {
-                        val notification = mapOf(
-                            "to" to targetDeviceToken,
-                            "notification" to mapOf(
-                                "title" to "New Message",
-                                "body" to message
-                            )
-                        )
-
-                        val retrofit = Retrofit.Builder()
-                            .baseUrl("https://fcm.googleapis.com/")
-                            .addConverterFactory(GsonConverterFactory.create())
-                            .build()
-
-                        val apiService = retrofit.create(ApiService::class.java)
-
-                        apiService.sendNotification("Bearer $senderUserId", notification).enqueue(object : Callback<ResponseBody> {
-                            override fun onResponse(call: Call<ResponseBody>, response: Response<ResponseBody>) {
-                                if (response.isSuccessful) {
-                                    Log.d("sendMessage", "Notification sent successfully")
-                                } else {
-                                    Log.e("sendMessage", "Failed to send notification: ${response.errorBody()?.string()}")
-                                }
-                            }
-
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                Log.e("sendMessage", "Error sending notification: ${t.message}")
-                            }
-                        })
-                    } else {
-                        Log.e("sendMessage", "Recipient device token or userId not found")
-                    }
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    Log.e("sendMessage", "Error sending notification: ${error.message}")
-                }
-            })
-        } else {
-            Log.e("sendMessage", "Error: currentUser is null")
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                apiService.sendMessage(sendMessageDto)
+            } catch (e: Exception) {
+                Log.e("pushNotification", "Ошибка отправки уведомления: ${e.message}")
+            }
         }
     }
 

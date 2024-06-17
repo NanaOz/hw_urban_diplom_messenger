@@ -8,8 +8,13 @@ import retrofit2.Call
 import retrofit2.http.Header
 
 interface ApiService {
-    @Headers("Content-Type: application/json")
-    @POST("fcm/send")
-    fun sendNotification(@Header("Authorization") bearerToken: String, @Body notification: Map<String, Any>): Call<ResponseBody>
+    @POST("/send")
+    suspend fun sendMessage(
+        @Body body: SendMessageDto
+    )
 
+    @POST("/broadcast")
+    suspend fun broadcast(
+        @Body body: SendMessageDto
+    )
 }

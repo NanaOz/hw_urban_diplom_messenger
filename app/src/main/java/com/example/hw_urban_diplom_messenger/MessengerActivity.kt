@@ -4,18 +4,21 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 import com.example.hw_urban_diplom_messenger.adapters.PagerAdapter
 import com.example.hw_urban_diplom_messenger.databinding.ActivityMessengerBinding
+import com.google.android.gms.tasks.OnCompleteListener
 import com.google.android.material.tabs.TabLayoutMediator
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.messaging.FirebaseMessaging
 
 class MessengerActivity : AppCompatActivity() {
 
@@ -63,6 +66,8 @@ class MessengerActivity : AppCompatActivity() {
             }
         }.attach()
 
+        addTokenToDatabase()
+
         // Установка статуса онлайн в Firebase
         FirebaseAuth.getInstance().currentUser?.let { it1 ->
             firebaseDatabase.getReference("Users").child(it1.uid)
@@ -70,6 +75,38 @@ class MessengerActivity : AppCompatActivity() {
         }
 
     }
+
+
+//    private fun getToken(): String {
+//        var token = ""
+//        FirebaseMessaging.getInstance().token.addOnCompleteListener(OnCompleteListener { task ->
+//            if (!task.isSuccessful) {
+//                Log.w("pushNotification", "Fetching FCM registration token failed", task.exception)
+//                return@OnCompleteListener
+//            }
+//
+//            token = task.result
+//            Log.d("pushNotification", token)
+//        })
+//        return token
+//    }
+
+    private fun addTokenToDatabase() {
+        FirebaseMessaging.getInstance().token.addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                Log.w("pushNotification", "Fetching FCM registration token failed", task.exception)
+                return@addOnCompleteListener
+            }
+
+            val token = task.result
+            val currentUser = FirebaseAuth.getInstance().currentUser
+            if (currentUser != null) {
+                val userReference = FirebaseDatabase.getInstance().getReference("Users").child(currentUser.uid)
+                userReference.child("token").setValue(token)
+            }
+        }
+    }
+
 
     override fun onPause() {
         super.onPause()
