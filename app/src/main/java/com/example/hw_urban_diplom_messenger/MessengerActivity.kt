@@ -67,13 +67,6 @@ class MessengerActivity : AppCompatActivity() {
         }.attach()
 
         addTokenToDatabase()
-
-        // Установка статуса онлайн в Firebase
-        FirebaseAuth.getInstance().currentUser?.let { it1 ->
-            firebaseDatabase.getReference("Users").child(it1.uid)
-                .child("isOnline").setValue(true)
-        }
-
     }
 
     private fun addTokenToDatabase() {
@@ -92,7 +85,14 @@ class MessengerActivity : AppCompatActivity() {
         }
     }
 
-
+    override fun onStart() {
+        super.onStart()
+        // Установка статуса онлайн в Firebase
+        FirebaseAuth.getInstance().currentUser?.let { it1 ->
+            firebaseDatabase.getReference("Users").child(it1.uid)
+                .child("isOnline").setValue(true)
+        }
+    }
     override fun onPause() {
         super.onPause()
         // Установка статуса оффлайн в Firebase при сворачивании приложения
