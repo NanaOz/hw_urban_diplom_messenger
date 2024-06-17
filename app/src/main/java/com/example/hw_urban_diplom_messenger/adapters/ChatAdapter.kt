@@ -37,18 +37,10 @@ class ChatAdapter(private var users: MutableList<User> = mutableListOf()) :
         return users.size
     }
 
-    fun setUsers(newUsers: List<User>) {
-        val newUsersList = mutableListOf<User>()
-        newUsersList.addAll(newUsers)
+    fun setUsers(newUsers: MutableList<User>) {
         users.clear()
-        users.addAll(newUsersList)
-//        Log.d("ChatAdapter", "New users set, count: ${users.size}")
-//        Log.d("ChatAdapter", "newUsersList set, count: ${newUsersList.size}")
+        users.addAll(newUsers)
         notifyDataSetChanged()
-
-//        users.clear()
-//        users.addAll(newUsers)
-//        notifyDataSetChanged()
     }
 
     inner class ChatViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

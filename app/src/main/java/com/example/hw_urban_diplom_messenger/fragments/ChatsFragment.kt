@@ -73,7 +73,7 @@ class ChatsFragment : Fragment() {
 
     private fun retrieveChatsFromFirebase() {
         val chatsRef = FirebaseDatabase.getInstance().getReference("Chats")
-
+        val userL = mutableListOf<User>()
         chatsRef.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 chatsList.clear()
@@ -86,7 +86,7 @@ class ChatsFragment : Fragment() {
 
                     if (userId1 == currentUserUid || userId2 == currentUserUid) {
                         val userIdToDisplay = if (userId1 != currentUserUid) userId1 else userId2
-                        val existingChat = usersList.find { it.userId == userIdToDisplay }
+                        val existingChat = userL.find { it.userId == userIdToDisplay }
 
                         if (existingChat == null) {
                             val userRef = FirebaseDatabase.getInstance().getReference("Users")
@@ -99,39 +99,32 @@ class ChatsFragment : Fragment() {
 
                                     user.isOnline = userSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false
 
-                                    val messagesRef = FirebaseDatabase.getInstance().getReference("Chats/$chatId/messages")
-                                    messagesRef.limitToLast(1).addListenerForSingleValueEvent(object : ValueEventListener {
-                                        override fun onDataChange(messagesSnapshot: DataSnapshot) {
-                                            if (messagesSnapshot.exists()) {
-                                                val lastMessageSnapshot = messagesSnapshot.children.first()
-                                                val lastMessageText = lastMessageSnapshot.child("text").value.toString()
+                                    user.lastMessage = userSnapshot.child("lastMessage").getValue(String::class.java).toString()
 
-
-                                                val limitedLastMessage = if (lastMessageText.length > 20) {
-                                                    "${lastMessageText.substring(0, 25)}..."
-                                                } else {
-                                                    lastMessageText
-                                                }
-
-                                                user.lastMessage = limitedLastMessage
-
-                                                usersList.add(user)
-                                                chatAdapter.setUsers(usersList)
-                                                Log.d("ChatAdapter", "Users retrieved from Firebase: ${user.name}")
-                                            }
-                                        }
-
-                                        override fun onCancelled(databaseError: DatabaseError) {
-                                            Log.e("ChatsFragment", "Failed to retrieve messages: $databaseError")
-                                        }
-                                    })
+                                    userL.add(user)
+                                    chatAdapter.setUsers(userL)
                                 }
 
                                 override fun onCancelled(databaseError: DatabaseError) {
                                     Log.e("ChatsFragment", "Failed to retrieve user data: $databaseError")
                                 }
                             })
-                        }
+                        }else {
+                            val userRef = FirebaseDatabase.getInstance().getReference("Users")
+                                .child(userIdToDisplay)
+                            userRef.addValueEventListener(object : ValueEventListener {
+                                override fun onDataChange(userSnapshot: DataSnapshot) {
+                                    existingChat.name = userSnapshot.child("name").value.toString()
+                                    existingChat.profileImageUri = userSnapshot.child("profileImageUri").value.toString()
+                                    existingChat.isOnline = userSnapshot.child("isOnline").getValue(Boolean::class.java)?: false
+                                    existingChat.lastMessage = userSnapshot.child("lastMessage").getValue(String::class.java).toString()
+
+                                    chatAdapter.setUsers(userL)
+                                }
+                                override fun onCancelled(databaseError: DatabaseError) {
+                                    Log.e("ChatsFragment", "Failed to retrieve user data: $databaseError")
+                                }
+                            })}
                     }
                 }
             }
@@ -142,27 +135,4 @@ class ChatsFragment : Fragment() {
         })
     }
 }
-//    private fun setupOnlineStatusListener() {
-//        val usersRef = FirebaseDatabase.getInstance().getReference("Users")
-//        val currentUserListener = object : ValueEventListener {
-//            override fun onDataChange(dataSnapshot: DataSnapshot) {
-//                val currentUser = usersList.find { it.userId == currentUserUid }
-//                currentUser?.let {
-//                    val isOnline = dataSnapshot.child("isOnline").getValue(Boolean::class.java) ?: false
-//                    it.isOnline = isOnline
-//                    Log.e("ChatStatus", "Current user is online: $currentUser")
-//                    activity?.runOnUiThread {
-//                        chatAdapter.notifyDataSetChanged() // Обновляем RecyclerView, чтобы отразить изменения в основном потоке
-//                    }
-//                }
-//            }
-//
-//            override fun onCancelled(databaseError: DatabaseError) {
-//                Log.e("ChatsFragment", "Failed to retrieve current user data: $databaseError")
-//            }
-//        }
-//
-//        currentUserUid?.let {
-//            usersRef.child(it).addValueEventListener(currentUserListener)
-//        }
-//    }
+

@@ -51,6 +51,7 @@ import com.google.firebase.messaging.ktx.messaging
 import android.Manifest
 import androidx.core.app.ActivityCompat.finishAffinity
 import androidx.core.content.ContextCompat.startActivity
+import com.example.hw_urban_diplom_messenger.fragments.ChatsFragment
 import com.google.firebase.database.ktx.database
 import com.google.firebase.messaging.RemoteMessage
 import kotlinx.coroutines.CoroutineScope
@@ -269,6 +270,12 @@ class ChatActivity : AppCompatActivity() {
 
             val userId = getInterlocutorId(ownerId.toString(), chatId)
             val userRef = userId?.let { FirebaseDatabase.getInstance().reference.child("Users").child(it) }
+
+            ownerId.let { ownerId ->
+                FirebaseDatabase.getInstance().reference.child("Users").child(ownerId).child("lastMessage").setValue(message)
+            }
+            userRef?.child("lastMessage")?.setValue(message)
+
             userRef?.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(dataSnapshot: DataSnapshot) {
                     val token = dataSnapshot.child("token").getValue(String::class.java)
