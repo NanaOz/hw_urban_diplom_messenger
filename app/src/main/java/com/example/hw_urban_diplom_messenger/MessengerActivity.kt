@@ -1,7 +1,10 @@
 package com.example.hw_urban_diplom_messenger
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -9,6 +12,8 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.example.hw_urban_diplom_messenger.adapters.PagerAdapter
 import com.example.hw_urban_diplom_messenger.databinding.ActivityMessengerBinding
 import com.google.android.gms.tasks.OnCompleteListener
@@ -29,6 +34,7 @@ class MessengerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMessengerBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        pushPermission()
         firebaseDatabase = FirebaseDatabase.getInstance() // статус
 
         setSupportActionBar(binding.toolbar)
@@ -67,6 +73,23 @@ class MessengerActivity : AppCompatActivity() {
         }.attach()
 
         addTokenToDatabase()
+    }
+
+    private fun pushPermission (){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val hasPermission = ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+
+            if (!hasPermission) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    0
+                )
+            }
+        }
     }
 
     private fun addTokenToDatabase() {

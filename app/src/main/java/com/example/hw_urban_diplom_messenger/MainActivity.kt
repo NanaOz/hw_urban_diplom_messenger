@@ -20,7 +20,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        pushPermission()
 
         val slideBlinkAnimation = AnimationUtils.loadAnimation(this, R.anim.anim_main)
         binding.imageView.startAnimation(slideBlinkAnimation)
@@ -32,20 +31,5 @@ class MainActivity : AppCompatActivity() {
         }, 3000)
     }
 
-    private fun pushPermission (){
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasPermission = ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
 
-            if (!hasPermission) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    0
-                )
-            }
-        }
-    }
 }
